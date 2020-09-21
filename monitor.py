@@ -2,13 +2,25 @@
 
 # Get messages from discord
 
+import os
 
-# For each message, check if contains spotify link
-    # If song
-        # Add to overall playlist
-        # Add to weekly playlist
-    # If album
-         # Add all songs on album to overall playlist
-         # Add all songs to weekly playlist
+import discord
+from dotenv import load_dotenv
+
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+GUILD = os.getenv('DISCORD_GUILD')
+
+client = discord.Client()
+
+@client.event
+async def on_ready():
+    print(f'{client.user} is connected')
+
+@client.event 
+async def on_message(message):
+    if message.author != client.user:
+        await message.channel.send("Message received")
 
 
+client.run(TOKEN)
