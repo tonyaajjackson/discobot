@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 
-# Get messages from discord
-
 import os
+import re
 
 import discord
 from dotenv import load_dotenv
 
+# Environment setup
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+
+spotify_regex=re.compile("https:\/\/open.spotify.com\/(.+)\/(.+)\?")
 
 client = discord.Client()
 
@@ -19,8 +21,14 @@ async def on_ready():
 
 @client.event 
 async def on_message(message):
-    if message.author != client.user:
-        await message.channel.send("Message received")
+    if message.author == client.user: return
+
+    await message.channel.send("Received a message!")
+
+    if link := spotify_regex.search(message.content):
+        link_type = link.group(1)
+        link_id = link.group(2)
+        await message.channel.send("Spotify link type: " + link_type + " id: " + link_id)
 
 
 client.run(TOKEN)
