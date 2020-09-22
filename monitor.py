@@ -1,17 +1,25 @@
 #!/usr/bin/python3
 
+# Dependencies
 import os
 import re
 
 import discord
 from dotenv import load_dotenv
 
-# Environment setup
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
-spotify_regex=re.compile("https:\/\/open.spotify.com\/(.+)\/(.+)\?")
+
+# ENVIRONMENT SETUP
+load_dotenv()
+
+
+# Discord
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+DISCORD_GUILD = os.getenv('DISCORD_GUILD')
+
+link_regex = re.compile(r"https:\/\/open.spotify.com\/(.+)\/(.+)\?")
 
 client = discord.Client()
 
@@ -23,12 +31,34 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user: return
 
-    await message.channel.send("Received a message!")
-
-    if link := spotify_regex.search(message.content):
+    # Extract Spotify link
+    if link :=link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
-        await message.channel.send("Spotify link type: " + link_type + " id: " + link_id)
+
+        all_time_playlist = sp.playlist_items(SPOTIFY_ALL_TIME_PLAYLIST_ID)
+        weekly_playlist = sp.playlist_items(SPOTIFY_WEEKLY_PLAYLIST_ID)
+        
+        if link_type == "track":
+            if link_id not in [item['track']['id'] for item in all_time_playlist['items']]:
+                sp.playlist_add_items(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
+
+            if link_id not in [item['track']['id'] for item in weekly_playlist['items']]:
+                sp.playlist_add_items(SPOTIFY_WEEKLY_PLAYLIST_ID, [link_id])
+        
 
 
-client.run(TOKEN)
+
+# Spotify
+SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
+SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
+SPOTIPY_CLIENT_URI = os.getenv('SPOTIPY_CLIENT_URI')
+
+SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
+
+spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
+
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=spotipy_scope))
+
+# Start discord bot
+client.run(DISCORD_TOKEN)
