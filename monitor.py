@@ -31,6 +31,9 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user: return
 
+    if message.content == "wipe":
+        wipe_weekly_playlist()
+
     if link :=link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
@@ -71,6 +74,12 @@ def add_if_unique_tracks(playlist_id, track_ids):
     if unique_track_ids:
         sp.playlist_add_items(playlist_id, list(unique_track_ids))
     
+
+# Wipe weekly playlist
+def wipe_weekly_playlist():
+    while track_ids := [item['track']['id'] for item in sp.playlist_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID)['items']]:
+        sp.playlist_remove_all_occurrences_of_items(SPOTIFY_WEEKLY_PLAYLIST_ID, track_ids)
+
 
 # Start discord bot
 client.run(DISCORD_TOKEN)
