@@ -31,15 +31,18 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user: return
 
-    # Extract Spotify link
     if link :=link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
         
         if link_type == "track":
             add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
-        
+            add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, [link_id])
 
+        if link_type == "album":
+            album_track_ids = [item['id'] for item in sp.album_tracks(link_id)['items']]
+            add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, album_track_ids)
+            add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, album_track_ids)
 
 
 # Spotify
