@@ -68,7 +68,8 @@ def add_if_unique_tracks(playlist_id, track_ids):
     playlist = sp.playlist_items(playlist_id)
     playlist_track_ids = set(item['track']['id'] for item in playlist['items'])
     unique_track_ids = set(id for id in track_ids if id not in playlist_track_ids)
-    sp.playlist_add_items(playlist_id, list(unique_track_ids))
+    if unique_track_ids:
+        sp.playlist_add_items(playlist_id, list(unique_track_ids))
     
 
 # Start discord bot
