@@ -35,16 +35,9 @@ async def on_message(message):
     if link :=link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
-
-        all_time_playlist = sp.playlist_items(SPOTIFY_ALL_TIME_PLAYLIST_ID)
-        weekly_playlist = sp.playlist_items(SPOTIFY_WEEKLY_PLAYLIST_ID)
         
         if link_type == "track":
-            if link_id not in [item['track']['id'] for item in all_time_playlist['items']]:
-                sp.playlist_add_items(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
-
-            if link_id not in [item['track']['id'] for item in weekly_playlist['items']]:
-                sp.playlist_add_items(SPOTIFY_WEEKLY_PLAYLIST_ID, [link_id])
+            add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
         
 
 
@@ -60,6 +53,16 @@ SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
 spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=spotipy_scope))
+
+def add_if_unique_tracks(playlist_id, track_ids):
+    assert type(playlist_id) == str
+    assert type(track_ids) == list
+
+    playlist = sp.playlist_items(playlist_id)
+    playlist_track_ids = set(item['track']['id'] for item in playlist['items'])
+    unique_track_ids = set(id for id in track_ids if id not in playlist_track_ids)
+    sp.playlist_add_items(playlist_id, list(unique_track_ids))
+    
 
 # Start discord bot
 client.run(DISCORD_TOKEN)
