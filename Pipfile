@@ -9,6 +9,7 @@ pylint = "*"
 [packages]
 "discord.py" = "*"
 python-dotenv = "*"
+spotipy = "*"
 
 [requires]
 python_version = "3.8"
