@@ -44,6 +44,10 @@ async def on_message(message):
             add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, album_track_ids)
             add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, album_track_ids)
 
+        if link_type == "artist":
+            top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
+            add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, top_song_ids)
+            add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, top_song_ids)
 
 # Spotify
 SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
