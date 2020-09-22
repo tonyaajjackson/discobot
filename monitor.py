@@ -55,6 +55,7 @@ SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
 SPOTIPY_CLIENT_URI = os.getenv('SPOTIPY_CLIENT_URI')
 
 SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
+SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
 
 spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
 
