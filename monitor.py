@@ -62,7 +62,14 @@ SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
 
 spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=spotipy_scope))
+sp = spotipy.Spotify(
+    auth_manager=SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        scope=spotipy_scope,
+        open_browser=False
+    )
+)
 
 def add_if_unique_tracks(playlist_id, track_ids):
     assert type(playlist_id) == str
