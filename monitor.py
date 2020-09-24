@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+import aiocron
+import asyncio
 
 # ENVIRONMENT SETUP
 load_dotenv()
@@ -31,9 +33,6 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user: return
 
-    if message.content == "wipe":
-        wipe_weekly_playlist()
-
     if link :=link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
@@ -51,6 +50,7 @@ async def on_message(message):
             top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
             add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, top_song_ids)
             add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, top_song_ids)
+
 
 # Spotify
 SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
@@ -82,10 +82,14 @@ def add_if_unique_tracks(playlist_id, track_ids):
         sp.playlist_add_items(playlist_id, list(unique_track_ids))
     
 
-# Wipe weekly playlist
-def wipe_weekly_playlist():
-    while track_ids := [item['track']['id'] for item in sp.playlist_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID)['items']]:
-        sp.playlist_remove_all_occurrences_of_items(SPOTIFY_WEEKLY_PLAYLIST_ID, track_ids)
+def wipe_playlist(playlist_id):
+    while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_id)['items']]:
+        sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids)
+
+@aiocron.crontab('0 0 * * 6')
+async def wipe_weekly_playlist():
+    print("Clearing weekly playlist")
+    wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
 
 
 # Start discord bot
