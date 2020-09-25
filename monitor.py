@@ -33,6 +33,7 @@ try:
     SPOTIPY_CLIENT_URI = os.getenv('SPOTIPY_CLIENT_URI')
     SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
     SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
+    SPOTIFY_BUFFER_PLAYLIST_ID = os.getenv('SPOTIFY_BUFFER_PLAYLIST_ID')
 
     # Initialize Spotify connection
     spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
@@ -66,17 +67,17 @@ try:
 
                 if link_type == "track":
                     add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
-                    add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, [link_id])
+                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, [link_id])
 
                 if link_type == "album":
                     album_track_ids = [item['id'] for item in sp.album_tracks(link_id)['items']]
                     add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, album_track_ids)
-                    add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, album_track_ids)
+                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, album_track_ids)
 
                 if link_type == "artist":
                     top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
                     add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, top_song_ids)
-                    add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, top_song_ids)
+                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, top_song_ids)
 
 
     # Spotify functions
@@ -95,10 +96,20 @@ try:
         while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_id)['items']]:
             sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids)
 
+    def copy_all_playlist_tracks(source_id, dest_id):
+        offset = 0
+        while track_ids := [item['track']['id'] for item in sp.playlist_tracks(source_id, offset=offset)['items']]:
+            sp.playlist_add_items(dest_id, track_ids)
+            offset += 100
+
     @aiocron.crontab('0 0 * * 6')
-    async def wipe_weekly_playlist():
-        print("Clearing weekly playlist")
+    async def load_weekly_playlist():
         wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
+        copy_all_playlist_tracks(
+            SPOTIFY_BUFFER_PLAYLIST_ID,
+            SPOTIFY_WEEKLY_PLAYLIST_ID
+        )
+        wipe_playlist(SPOTIFY_BUFFER_PLAYLIST_ID)            
 
     # Start Discord bot
     discord_client.run(DISCORD_TOKEN)
