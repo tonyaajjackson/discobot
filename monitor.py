@@ -20,6 +20,7 @@ load_dotenv()
 # Discord
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_GUILD = os.getenv('DISCORD_GUILD')
+DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
 
 link_regex = re.compile(r"https:\/\/open.spotify.com\/(.+)\/(.+)\?")
 
@@ -32,6 +33,7 @@ async def on_ready():
 @client.event 
 async def on_message(message):
     if message.author == client.user: return
+    if message.channel.name != DISCORD_CHANNEL: return
 
     if link :=link_regex.search(message.content):
         link_type = link.group(1)
@@ -90,7 +92,7 @@ def wipe_playlist(playlist_id):
 async def wipe_weekly_playlist():
     print("Clearing weekly playlist")
     wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
-
+    
 
 # Start discord bot
 client.run(DISCORD_TOKEN)
