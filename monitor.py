@@ -13,29 +13,46 @@ from spotipy.oauth2 import SpotifyOAuth
 import aiocron
 import asyncio
 
-# ENVIRONMENT SETUP
+# Environment Setup
 load_dotenv()
 
-
-# Discord
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_GUILD = os.getenv('DISCORD_GUILD')
 DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
 
-link_regex = re.compile(r"https:\/\/open.spotify.com\/(.+)\/(.+)\?")
+SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
+SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
+SPOTIPY_CLIENT_URI = os.getenv('SPOTIPY_CLIENT_URI')
+SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
+SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
 
-client = discord.Client()
+# Initialize Spotify connection
+spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
 
-@client.event
+sp = spotipy.Spotify(
+    auth_manager=SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        scope=spotipy_scope,
+        open_browser=False
+    )
+)
+
+# Set up discord connection
+discord_client = discord.Client()
+spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/(.+)\/(.+)\?")
+
+# Discord functions
+@discord_client.event
 async def on_ready():
-    print(f'{client.user} is connected')
+    print(f'{discord_client.user} is connected')
 
-@client.event 
+@discord_client.event 
 async def on_message(message):
-    if message.author == client.user: return
+    if message.author == discord_client.user: return
     if message.channel.name != DISCORD_CHANNEL: return
 
-    if link :=link_regex.search(message.content):
+    if link :=spotify_link_regex.search(message.content):
         link_type = link.group(1)
         link_id = link.group(2)
         
@@ -54,25 +71,7 @@ async def on_message(message):
             add_if_unique_tracks(SPOTIFY_WEEKLY_PLAYLIST_ID, top_song_ids)
 
 
-# Spotify
-SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
-SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
-SPOTIPY_CLIENT_URI = os.getenv('SPOTIPY_CLIENT_URI')
-
-SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
-SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
-
-spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
-
-sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(
-        client_id=SPOTIPY_CLIENT_ID,
-        client_secret=SPOTIPY_CLIENT_SECRET,
-        scope=spotipy_scope,
-        open_browser=False
-    )
-)
-
+# Spotify functions
 def add_if_unique_tracks(playlist_id, track_ids):
     assert type(playlist_id) == str
     assert type(track_ids) == list
@@ -92,7 +91,6 @@ def wipe_playlist(playlist_id):
 async def wipe_weekly_playlist():
     print("Clearing weekly playlist")
     wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
-    
 
-# Start discord bot
-client.run(DISCORD_TOKEN)
+# Start Discord bot
+discord_client.run(DISCORD_TOKEN)
