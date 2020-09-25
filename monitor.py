@@ -25,8 +25,7 @@ try:
     load_dotenv()
 
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-    DISCORD_GUILD = os.getenv('DISCORD_GUILD')
-    DISCORD_CHANNEL = os.getenv('DISCORD_CHANNEL')
+    DISCORD_CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
 
     SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
     SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
@@ -59,7 +58,7 @@ try:
     @discord_client.event
     async def on_message(message):
         if message.author == discord_client.user: return
-        if message.channel.name != DISCORD_CHANNEL: return
+        if message.channel.id != DISCORD_CHANNEL_ID: return
 
         if link :=spotify_link_regex.search(message.content):
                 link_type = link.group(1)
@@ -109,7 +108,7 @@ try:
             SPOTIFY_BUFFER_PLAYLIST_ID,
             SPOTIFY_WEEKLY_PLAYLIST_ID
         )
-        wipe_playlist(SPOTIFY_BUFFER_PLAYLIST_ID)            
+        wipe_playlist(SPOTIFY_BUFFER_PLAYLIST_ID)
 
     # Start Discord bot
     discord_client.run(DISCORD_TOKEN)
