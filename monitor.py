@@ -35,7 +35,11 @@ try:
     SPOTIFY_BUFFER_PLAYLIST_ID = os.getenv('SPOTIFY_BUFFER_PLAYLIST_ID')
 
     # Initialize Spotify connection
-    spotipy_scope = 'playlist-read-collaborative playlist-modify-public'
+    spotipy_scope = (
+        'playlist-read-collaborative' + ' ' +
+        'playlist-modify-public' + ' ' +
+        'playlist-modify-private'
+    )
 
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
