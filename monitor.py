@@ -105,7 +105,7 @@ try:
             sp.playlist_add_items(dest_id, track_ids)
             offset += 100
 
-    @aiocron.crontab('0 0 * * 6')
+    @aiocron.crontab('0 2 * * 6') # 6pm PST, 7pm PDT
     async def load_weekly_playlist():
         wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
         copy_all_playlist_tracks(
