@@ -109,6 +109,19 @@ try:
             SPOTIFY_WEEKLY_PLAYLIST_ID
         )
         wipe_playlist(SPOTIFY_BUFFER_PLAYLIST_ID)
+        channel = discord_client.get_channel(DISCORD_CHANNEL_ID)
+        
+        # Message chat
+        await channel.send("Check out all the songs shared this week!\n" +
+            "https://open.spotify.com/playlist/" + 
+            SPOTIFY_WEEKLY_PLAYLIST_ID
+        )
+        
+        await channel.send("You can also find all songs ever shared here:\n" + 
+            "https://open.spotify.com/playlist/" + 
+            SPOTIFY_ALL_TIME_PLAYLIST_ID
+        )
+
 
     # Start Discord bot
     discord_client.run(DISCORD_TOKEN)
