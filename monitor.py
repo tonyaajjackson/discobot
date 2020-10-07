@@ -47,7 +47,7 @@ try:
 
     # Set up discord connection
     discord_client = discord.Client()
-    spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/(.+)\/(.+)\?")
+    spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([^\n ]+)\?")
 
     # Discord functions
     @discord_client.event
@@ -59,9 +59,10 @@ try:
         if message.author == discord_client.user: return
         if message.channel.id != config.discord.channel_id: return
 
-        if link :=spotify_link_regex.search(message.content):
-                link_type = link.group(1)
-                link_id = link.group(2)
+        if links :=spotify_link_regex.findall(message.content):
+            for link in links:
+                link_type = link[0]
+                link_id = link[1]
 
                 if link_type == "track":
                     add_if_unique_tracks(config.spotipy.all_time_playlist_id, [link_id])
