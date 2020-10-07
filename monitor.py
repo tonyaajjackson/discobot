@@ -3,9 +3,10 @@
 # Dependencies
 import os
 import re
+import json
+from types import SimpleNamespace
 
 import discord
-from dotenv import load_dotenv
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -22,17 +23,10 @@ logging.basicConfig(
     format="%(asctime)s %(message)s")
 
 try:
-    load_dotenv()
-
-    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-    DISCORD_CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
-
-    SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
-    SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
-    SPOTIPY_REDIRECT_URI = os.getenv('SPOTIPY_REDIRECT_URI')
-    SPOTIFY_ALL_TIME_PLAYLIST_ID = os.getenv('SPOTIFY_ALL_TIME_PLAYLIST_ID')
-    SPOTIFY_WEEKLY_PLAYLIST_ID = os.getenv('SPOTIFY_WEEKLY_PLAYLIST_ID')
-    SPOTIFY_BUFFER_PLAYLIST_ID = os.getenv('SPOTIFY_BUFFER_PLAYLIST_ID')
+    with open("config.json") as f:
+        config = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
+        # Lambda above makes JSON load as object, not dictionary.
+        # Source: https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
 
     # Initialize Spotify connection
     spotipy_scope = (
@@ -43,9 +37,9 @@ try:
 
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
-            client_id=SPOTIPY_CLIENT_ID,
-            client_secret=SPOTIPY_CLIENT_SECRET,
-            redirect_uri=SPOTIPY_REDIRECT_URI,
+            client_id=config.spotipy.client_id,
+            client_secret=config.spotipy.secret,
+            redirect_uri=config.spotipy.redirect_uri,
             scope=spotipy_scope,
             open_browser=False
         )
@@ -63,25 +57,25 @@ try:
     @discord_client.event
     async def on_message(message):
         if message.author == discord_client.user: return
-        if message.channel.id != DISCORD_CHANNEL_ID: return
+        if message.channel.id != config.discord.channel_id: return
 
         if link :=spotify_link_regex.search(message.content):
                 link_type = link.group(1)
                 link_id = link.group(2)
 
                 if link_type == "track":
-                    add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, [link_id])
-                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, [link_id])
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, [link_id])
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, [link_id])
 
                 if link_type == "album":
                     album_track_ids = [item['id'] for item in sp.album_tracks(link_id)['items']]
-                    add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, album_track_ids)
-                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, album_track_ids)
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, album_track_ids)
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, album_track_ids)
 
                 if link_type == "artist":
                     top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
-                    add_if_unique_tracks(SPOTIFY_ALL_TIME_PLAYLIST_ID, top_song_ids)
-                    add_if_unique_tracks(SPOTIFY_BUFFER_PLAYLIST_ID, top_song_ids)
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, top_song_ids)
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, top_song_ids)
 
 
     # Spotify functions
@@ -108,28 +102,28 @@ try:
 
     @aiocron.crontab('0 2 * * 6') # 6pm PST, 7pm PDT
     async def load_weekly_playlist():
-        wipe_playlist(SPOTIFY_WEEKLY_PLAYLIST_ID)
+        wipe_playlist(config.spotipy.weekly_playlist_id)
         copy_all_playlist_tracks(
-            SPOTIFY_BUFFER_PLAYLIST_ID,
-            SPOTIFY_WEEKLY_PLAYLIST_ID
+            config.spotipy.buffer_playlist_id,
+            config.spotipy.weekly_playlist_id
         )
-        wipe_playlist(SPOTIFY_BUFFER_PLAYLIST_ID)
-        channel = discord_client.get_channel(DISCORD_CHANNEL_ID)
+        wipe_playlist(config.spotipy.buffer_playlist_id)
+        channel = discord_client.get_channel(config.discord.channel_id)
         
         # Message chat
         await channel.send("Check out all the songs shared this week!\n" +
             "https://open.spotify.com/playlist/" + 
-            SPOTIFY_WEEKLY_PLAYLIST_ID
+            config.spotipy.weekly_playlist_id
         )
         
         await channel.send("You can also find all songs ever shared here:\n" + 
             "https://open.spotify.com/playlist/" + 
-            SPOTIFY_ALL_TIME_PLAYLIST_ID
+            config.spotipy.all_time_playlist_id
         )
 
 
     # Start Discord bot
-    discord_client.run(DISCORD_TOKEN)
+    discord_client.run(config.discord.token)
 
 except Exception as e:
     logging.exception("Exception occurred", exc_info=True)
