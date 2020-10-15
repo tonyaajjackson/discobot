@@ -30,7 +30,6 @@ try:
 
     # Initialize Spotify connection
     spotipy_scope = (
-        'playlist-read-collaborative' + ' ' +
         'playlist-modify-public' + ' ' +
         'playlist-modify-private'
     )
