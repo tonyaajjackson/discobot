@@ -140,4 +140,4 @@ cython_debug/
 # VS code
 .vscode/
 
-config.json
+config*.json
