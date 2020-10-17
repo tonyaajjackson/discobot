@@ -68,12 +68,22 @@ try:
                     add_if_unique_tracks(config.spotipy.buffer_playlist_id, [link_id])
 
                 if link_type == "album":
-                    album_track_ids = [item['id'] for item in sp.album_tracks(link_id)['items']]
+                    try:
+                        album_track_ids = [item['id'] for item in sp.album_tracks(link_id)['items']]
+                    except spotipy.exceptions.SpotifyException:
+                        logging.exception("Error in getting album tracks", exc_info=True)
+                        break
+
                     add_if_unique_tracks(config.spotipy.all_time_playlist_id, album_track_ids)
                     add_if_unique_tracks(config.spotipy.buffer_playlist_id, album_track_ids)
 
                 if link_type == "artist":
-                    top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
+                    try:
+                        top_song_ids = [item['id'] for item in sp.artist_top_tracks(link_id)['tracks']]
+                    except spotipy.exceptions.SpotifyException:
+                        logging.exception("Error in getting artist tracks", exc_info=True)
+                        break
+
                     add_if_unique_tracks(config.spotipy.all_time_playlist_id, top_song_ids)
                     add_if_unique_tracks(config.spotipy.buffer_playlist_id, top_song_ids)
 
@@ -83,22 +93,39 @@ try:
         assert type(playlist_id) == str
         assert type(track_ids) == list
 
-        playlist = sp.playlist_items(playlist_id)
+        try:
+            playlist = sp.playlist_items(playlist_id)
+        except spotipy.exceptions.SpotifyException:
+            logging.exception("Error in getting tracks from playlist ID: " + playlist_id, exc_info=True)
+            return
+
         playlist_track_ids = set(item['track']['id'] for item in playlist['items'])
         unique_track_ids = set(id for id in track_ids if id not in playlist_track_ids)
         if unique_track_ids:
-            sp.playlist_add_items(playlist_id, list(unique_track_ids))
+            try:
+                sp.playlist_add_items(playlist_id, list(unique_track_ids))
+            except spotipy.exceptions.SpotifyException:
+                logging.exception("Error in adding tracks to playlist ID: " + playlist_id, exc_info=True)
+                return
 
 
     def wipe_playlist(playlist_id):
-        while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_id)['items']]:
-            sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids)
+        try:
+            while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_id)['items']]:
+                sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids)
+        except spotipy.exceptions.SpotifyException:
+            logging.exception("Error in wiping playlist: " + playlist_id, exc_info=True)
+            return
 
     def copy_all_playlist_tracks(source_id, dest_id):
         offset = 0
-        while track_ids := [item['track']['id'] for item in sp.playlist_tracks(source_id, offset=offset)['items']]:
-            sp.playlist_add_items(dest_id, track_ids)
-            offset += 100
+        try:
+            while track_ids := [item['track']['id'] for item in sp.playlist_tracks(source_id, offset=offset)['items']]:
+                sp.playlist_add_items(dest_id, track_ids)
+                offset += 100
+        except spotipy.exceptions.SpotifyException:
+            logging.exception("Error in copying tracks from playlist: " + source_id + " to playlist: " + dest_id, exc_info=True)
+            return
 
     @aiocron.crontab('0 2 * * 6') # 6pm PST, 7pm PDT
     async def load_weekly_playlist():
@@ -125,6 +152,6 @@ try:
     # Start Discord bot
     discord_client.run(config.discord.token)
 
-except Exception as e:
+except Exception:
     logging.exception("Exception occurred", exc_info=True)
     raise
