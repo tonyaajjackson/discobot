@@ -135,8 +135,10 @@ try:
             config.spotipy.weekly_playlist_id
         )
         wipe_playlist(config.spotipy.buffer_playlist_id)
-        channel = discord_client.get_channel(config.discord.channel_id)
         
+        if not (channel := discord_client.get_channel(config.discord.channel_id)):
+            raise Exception("Cannot find Discord channel with id: " + config.discord.channel_id)
+
         # Message chat
         await channel.send("Check out all the songs shared this week!\n" +
             "https://open.spotify.com/playlist/" + 
