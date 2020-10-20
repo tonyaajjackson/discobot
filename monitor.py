@@ -127,7 +127,7 @@ try:
             logging.exception("Error in copying tracks from playlist: " + source_id + " to playlist: " + dest_id, exc_info=True)
             return
 
-    @aiocron.crontab('0 2 * * 6') # 6pm PST, 7pm PDT
+    @aiocron.crontab(config.playlist_update_datetime)
     async def load_weekly_playlist():
         wipe_playlist(config.spotipy.weekly_playlist_id)
         copy_all_playlist_tracks(
