@@ -1,0 +1,15 @@
+{
+  "discord": {
+    "token": "",
+    "channel_id": 
+  },
+  "spotipy": {
+    "client_id": "",
+    "secret": "",
+    "redirect_uri": "",
+    "all_time_playlist_id": "",
+    "weekly_playlist_id": "",
+    "buffer_playlist_id": ""
+  },
+  "playlist_update_datetime": ""
+}
