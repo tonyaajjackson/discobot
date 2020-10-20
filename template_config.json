@@ -8,7 +8,7 @@
     "secret": "",
     "redirect_uri": "https://example.com/",
     "all_time_playlist_id": "",
-    "weekly_playlist_id": "",
+    "recent_playlist_id": "",
     "buffer_playlist_id": ""
   },
   "playlist_update_datetime": ""

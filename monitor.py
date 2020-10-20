@@ -128,11 +128,11 @@ try:
             return
 
     @aiocron.crontab(config.playlist_update_datetime)
-    async def load_weekly_playlist():
-        wipe_playlist(config.spotipy.weekly_playlist_id)
+    async def load_recent_playlist():
+        wipe_playlist(config.spotipy.recent_playlist_id)
         copy_all_playlist_tracks(
             config.spotipy.buffer_playlist_id,
-            config.spotipy.weekly_playlist_id
+            config.spotipy.recent_playlist_id
         )
         wipe_playlist(config.spotipy.buffer_playlist_id)
         
@@ -140,9 +140,9 @@ try:
             raise Exception("Cannot find Discord channel with id: " + config.discord.channel_id)
 
         # Message chat
-        await channel.send("Check out all the songs shared this week!\n" +
+        await channel.send("Check out all the songs shared recently!\n" +
             "https://open.spotify.com/playlist/" + 
-            config.spotipy.weekly_playlist_id
+            config.spotipy.recent_playlist_id
         )
         
         await channel.send("You can also find all songs ever shared here:\n" + 
