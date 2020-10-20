@@ -2,6 +2,7 @@
 
 # Dependencies
 import os
+import sys
 import re
 import json
 from types import SimpleNamespace
@@ -52,6 +53,18 @@ try:
     @discord_client.event
     async def on_ready():
         print(f'{discord_client.user} is connected')
+
+        # Test Spotify connection and trigger Spotify OAuth setup if not already authorized
+        try:
+            sp.track("4uLU6hMCjMI75M1A2tKUQC")['artists'][0]['name'] == 'Rick Astley'
+        except spotipy.SpotifyOauthError:
+            logging.exception("Error in establishing OAuth connection to Spotify. "
+                "Chatbot will now begin shutdown. "
+                "Try deleting the .cache file to re-trigger the OAuth authentication process.")
+            sys.exit()
+        
+        logging.info("Successfully connected to Spotify with OAuth")
+
 
     @discord_client.event
     async def on_message(message):
