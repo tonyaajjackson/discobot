@@ -19,7 +19,6 @@ import logging
 
 # Environment Setup
 logging.basicConfig(
-    filename='discobot.log',
     level=logging.INFO,
     format="%(asctime)s %(message)s")
 
@@ -52,7 +51,7 @@ try:
     # Discord functions
     @discord_client.event
     async def on_ready():
-        print(f'{discord_client.user} is connected')
+        logging.info(f'{discord_client.user} is connected')
 
         # Test Spotify connection and trigger Spotify OAuth setup if not already authorized
         try:
