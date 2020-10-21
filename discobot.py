@@ -76,8 +76,8 @@ try:
                 link_id = link[1]
 
                 if link_type == "track":
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, [link_id])
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, [link_id])
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, [link_id])
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, [link_id])
 
                 if link_type == "album":
                     try:
@@ -86,8 +86,8 @@ try:
                         logging.exception("Error in getting album tracks", exc_info=True)
                         break
 
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, album_track_ids)
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, album_track_ids)
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, album_track_ids)
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, album_track_ids)
 
                 if link_type == "artist":
                     try:
@@ -96,37 +96,37 @@ try:
                         logging.exception("Error in getting artist tracks", exc_info=True)
                         break
 
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_id, top_song_ids)
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_id, top_song_ids)
+                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, top_song_ids)
+                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, top_song_ids)
 
 
     # Spotify functions
-    def add_if_unique_tracks(playlist_id, track_ids):
-        assert type(playlist_id) == str
+    def add_if_unique_tracks(playlist_uri, track_ids):
+        assert type(playlist_uri) == str
         assert type(track_ids) == list
 
         try:
-            playlist = sp.playlist_items(playlist_id)
+            playlist = sp.playlist_items(playlist_uri)
         except spotipy.exceptions.SpotifyException:
-            logging.exception("Error in getting tracks from playlist ID: " + playlist_id, exc_info=True)
+            logging.exception("Error in getting tracks from playlist ID: " + playlist_uri, exc_info=True)
             return
 
         playlist_track_ids = set(item['track']['id'] for item in playlist['items'])
         unique_track_ids = set(id for id in track_ids if id not in playlist_track_ids)
         if unique_track_ids:
             try:
-                sp.playlist_add_items(playlist_id, list(unique_track_ids))
+                sp.playlist_add_items(playlist_uri, list(unique_track_ids))
             except spotipy.exceptions.SpotifyException:
-                logging.exception("Error in adding tracks to playlist ID: " + playlist_id, exc_info=True)
+                logging.exception("Error in adding tracks to playlist ID: " + playlist_uri, exc_info=True)
                 return
 
 
-    def wipe_playlist(playlist_id):
+    def wipe_playlist(playlist_uri):
         try:
-            while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_id)['items']]:
-                sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids)
+            while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_uri)['items']]:
+                sp.playlist_remove_all_occurrences_of_items(playlist_uri, track_ids)
         except spotipy.exceptions.SpotifyException:
-            logging.exception("Error in wiping playlist: " + playlist_id, exc_info=True)
+            logging.exception("Error in wiping playlist: " + playlist_uri, exc_info=True)
             return
 
     def copy_all_playlist_tracks(source_id, dest_id):
@@ -141,12 +141,12 @@ try:
 
     @aiocron.crontab(config.playlist_update_datetime)
     async def load_recent_playlist():
-        wipe_playlist(config.spotipy.recent_playlist_id)
+        wipe_playlist(config.spotipy.recent_playlist_uri)
         copy_all_playlist_tracks(
-            config.spotipy.buffer_playlist_id,
-            config.spotipy.recent_playlist_id
+            config.spotipy.buffer_playlist_uri,
+            config.spotipy.recent_playlist_uri
         )
-        wipe_playlist(config.spotipy.buffer_playlist_id)
+        wipe_playlist(config.spotipy.buffer_playlist_uri)
         
         if not (channel := discord_client.get_channel(config.discord.channel_id)):
             raise Exception("Cannot find Discord channel with id: " + config.discord.channel_id)
@@ -154,12 +154,12 @@ try:
         # Message chat
         await channel.send("Check out all the songs shared recently!\n" +
             "https://open.spotify.com/playlist/" + 
-            config.spotipy.recent_playlist_id
+            config.spotipy.recent_playlist_uri
         )
         
         await channel.send("You can also find all songs ever shared here:\n" + 
             "https://open.spotify.com/playlist/" + 
-            config.spotipy.all_time_playlist_id
+            config.spotipy.all_time_playlist_uri
         )
 
 

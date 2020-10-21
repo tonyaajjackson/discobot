@@ -7,9 +7,9 @@
     "client_id": "",
     "secret": "",
     "redirect_uri": "https://example.com/",
-    "all_time_playlist_id": "",
-    "recent_playlist_id": "",
-    "buffer_playlist_id": ""
+    "all_time_playlist_uri": "",
+    "recent_playlist_uri": "",
+    "buffer_playlist_uri": ""
   },
   "playlist_update_datetime": ""
 }
