@@ -19,7 +19,7 @@ On a configurably regular basis, the bot will:
 
 
 ## Setup
-### Python environment
+### Python Environment
 1.  Install [pyenv](https://github.com/pyenv/pyenv)
 1.  Install pipenv:
 
@@ -78,7 +78,7 @@ On a configurably regular basis, the bot will:
 
 
 ## Usage
-### Command line
+### Command Line
 1. To activate the python virtual environment, run:
     
     `pipenv shell`
