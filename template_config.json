@@ -6,7 +6,7 @@
   "spotipy": {
     "client_id": "",
     "secret": "",
-    "redirect_uri": "https://example.com/",
+    "redirect_uri": "https://localhost/",
     "all_time_playlist_uri": "",
     "recent_playlist_uri": "",
     "buffer_playlist_uri": ""
