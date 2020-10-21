@@ -12,7 +12,7 @@ FROM base AS runtime
 COPY --from=python-deps /.venv /.venv
 ENV PATH="/.venv/bin:$PATH"
 COPY config.json .
-COPY monitor.py .
+COPY discobot.py .
 COPY .cache .
 
-ENTRYPOINT ["python", "-u", "monitor.py"]
+ENTRYPOINT ["python", "-u", "discobot.py"]
