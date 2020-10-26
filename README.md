@@ -14,7 +14,7 @@ On a configurably regular basis, the bot will:
 1. Wipe the "Recent" playlist
 1. Copy all songs from the "Buffer" playlist to the "Recent" playlist
 1. Wipe the "Buffer" playlist
-1. Send Discord messages in the specified channel to let notify that the new Recent playlist is available
+1. Send Discord messages in the specified channel to let members know that the new Recent playlist is available
 1. Send a Discord message to remind people of the "All Time" playlist
 
 
