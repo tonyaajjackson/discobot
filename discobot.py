@@ -159,7 +159,11 @@ try:
             wipe_playlist(guild_info.buffer_playlist_uri)
 
             if not (channel := discord_client.get_channel(guild_info.channel_id)):
-                raise Exception("Cannot find Discord channel with id: " + guild_info.channel_id)
+                logging.error("Cannot find Discord channel with id: " + 
+                    str(guild_info.channel_id) +
+                    " - check that discord bot has been added to server."
+                    " Follow Discord OAuth process described in readme to add bot to server.")
+                break
 
             # Message chat
             await channel.send("Check out all the songs shared recently!\n" +
