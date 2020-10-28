@@ -1,15 +1,12 @@
 {
-  "discord": {
-    "token": "",
-    "channel_id": 
-  },
-  "spotipy": {
-    "client_id": "",
-    "secret": "",
-    "redirect_uri": "https://localhost/",
-    "all_time_playlist_uri": "",
-    "recent_playlist_uri": "",
-    "buffer_playlist_uri": ""
-  },
+  "guilds": [
+    {
+      "_id": ,
+      "channel_id": ,
+      "all_time_playlist_uri": "",
+      "recent_playlist_uri": "",
+      "buffer_playlist_uri": ""
+    }
+  ],
   "playlist_update_datetime": ""
 }

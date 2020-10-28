@@ -28,6 +28,9 @@ try:
         # Lambda above makes JSON load as object, not dictionary.
         # Source: https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
 
+    with open("secrets.json") as f:
+        secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
+
     # Initialize Spotify connection
     spotipy_scope = (
         'playlist-modify-public' + ' ' +
@@ -36,9 +39,9 @@ try:
 
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
-            client_id=config.spotipy.client_id,
-            client_secret=config.spotipy.secret,
-            redirect_uri=config.spotipy.redirect_uri,
+            client_id=secrets.spotipy.client_id,
+            client_secret=secrets.spotipy.secret,
+            redirect_uri=secrets.spotipy.redirect_uri,
             scope=spotipy_scope,
             open_browser=False
         )
@@ -67,8 +70,14 @@ try:
 
     @discord_client.event
     async def on_message(message):
+        try:
+            guild_info = [guild for guild in config.guilds if guild._id == message.guild.id][0]
+        except IndexError:
+            logging.error("Received message from guild_id: " + str(message.guild.id) + " but no corresponding guild was found in guilds. Ignoring message.")
+            return
+
         if message.author == discord_client.user: return
-        if message.channel.id != config.discord.channel_id: return
+        if message.channel.id != guild_info.channel_id: return
 
         if links :=spotify_link_regex.findall(message.content):
             for link in links:
@@ -76,8 +85,8 @@ try:
                 link_id = link[1]
 
                 if link_type == "track":
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, [link_id])
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, [link_id])
+                    add_if_unique_tracks(guild_info.all_time_playlist_uri, [link_id])
+                    add_if_unique_tracks(guild_info.buffer_playlist_uri, [link_id])
 
                 if link_type == "album":
                     try:
@@ -86,8 +95,8 @@ try:
                         logging.exception("Error in getting album tracks", exc_info=True)
                         break
 
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, album_track_ids)
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, album_track_ids)
+                    add_if_unique_tracks(guild_info.all_time_playlist_uri, album_track_ids)
+                    add_if_unique_tracks(guild_info.buffer_playlist_uri, album_track_ids)
 
                 if link_type == "artist":
                     try:
@@ -96,8 +105,8 @@ try:
                         logging.exception("Error in getting artist tracks", exc_info=True)
                         break
 
-                    add_if_unique_tracks(config.spotipy.all_time_playlist_uri, top_song_ids)
-                    add_if_unique_tracks(config.spotipy.buffer_playlist_uri, top_song_ids)
+                    add_if_unique_tracks(guild_info.all_time_playlist_uri, top_song_ids)
+                    add_if_unique_tracks(guild_info.buffer_playlist_uri, top_song_ids)
 
 
     # Spotify functions
@@ -141,30 +150,31 @@ try:
 
     @aiocron.crontab(config.playlist_update_datetime)
     async def load_recent_playlist():
-        wipe_playlist(config.spotipy.recent_playlist_uri)
-        copy_all_playlist_tracks(
-            config.spotipy.buffer_playlist_uri,
-            config.spotipy.recent_playlist_uri
-        )
-        wipe_playlist(config.spotipy.buffer_playlist_uri)
-        
-        if not (channel := discord_client.get_channel(config.discord.channel_id)):
-            raise Exception("Cannot find Discord channel with id: " + config.discord.channel_id)
+        for guild_info in config.guilds:
+            wipe_playlist(guild_info.recent_playlist_uri)
+            copy_all_playlist_tracks(
+                guild_info.buffer_playlist_uri,
+                guild_info.recent_playlist_uri
+            )
+            wipe_playlist(guild_info.buffer_playlist_uri)
 
-        # Message chat
-        await channel.send("Check out all the songs shared recently!\n" +
-            "https://open.spotify.com/playlist/" + 
-            config.spotipy.recent_playlist_uri
-        )
-        
-        await channel.send("You can also find all songs ever shared here:\n" + 
-            "https://open.spotify.com/playlist/" + 
-            config.spotipy.all_time_playlist_uri
-        )
+            if not (channel := discord_client.get_channel(guild_info.channel_id)):
+                raise Exception("Cannot find Discord channel with id: " + guild_info.channel_id)
+
+            # Message chat
+            await channel.send("Check out all the songs shared recently!\n" +
+                "https://open.spotify.com/playlist/" + 
+                guild_info.recent_playlist_uri
+            )
+            
+            await channel.send("You can also find all songs ever shared here:\n" + 
+                "https://open.spotify.com/playlist/" + 
+                guild_info.all_time_playlist_uri
+            )
 
 
     # Start Discord bot
-    discord_client.run(config.discord.token)
+    discord_client.run(secrets.discord.token)
 
 except Exception:
     logging.exception("Exception occurred", exc_info=True)
