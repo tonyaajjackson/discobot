@@ -8,5 +8,5 @@
       "buffer_playlist_uri": ""
     }
   ],
-  "playlist_update_datetime": ""
+  "playlist_update_cron_expr": "",
 }

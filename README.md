@@ -74,7 +74,7 @@ On a configurably regular basis, the bot will:
 
     You can use [crontab.guru](https://crontab.guru/#0_18_*_*_6) to build the cron expression
 
-1. Copy the cron expression into the `playlist_update_datetime` field in `config.json`
+1. Copy the cron expression into the `playlist_update_cron_expr` field in `config.json`
 
 
 ## Usage

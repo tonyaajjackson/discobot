@@ -147,7 +147,7 @@ def copy_all_playlist_tracks(source_id, dest_id):
         logging.exception("Error in copying tracks from playlist: " + source_id + " to playlist: " + dest_id, exc_info=True)
         return
 
-@aiocron.crontab(config.playlist_update_datetime)
+@aiocron.crontab(config.playlist_update_cron_expr)
 async def load_recent_playlist():
     for guild_info in config.guilds:
         wipe_playlist(guild_info.recent_playlist_uri)
