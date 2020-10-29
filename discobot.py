@@ -75,7 +75,7 @@ async def on_message(message):
         logging.error("Received message from guild_id: " + str(message.guild.id) + " but no corresponding guild was found in guilds. Ignoring message.")
         return
 
-    if message.author == discord_client.user: return
+    if message.author == discord_client.user and message.content[0:6] != "!debug": return
     if message.channel.id != guild_info.channel_id: return
 
     if links :=spotify_link_regex.findall(message.content):
@@ -174,6 +174,98 @@ async def load_recent_playlist():
             "https://open.spotify.com/playlist/" + 
             guild_info.all_time_playlist_uri
         )
+
+
+@aiocron.crontab(config.monitoring_cron_expr)
+async def monitor_connection():
+    debug_guilds = [guild for guild in config.guilds if guild.is_connection_testing_guild]
+
+    test_links = {
+        "track" :   "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+        "album" :   "https://open.spotify.com/album/6N9PS4QXF1D0OWPk0Sxtb4",
+        "artist":   "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
+    }
+
+    for guild_info in debug_guilds:
+        logging.info("Beginning connection test of guild: " + str(guild_info._id))
+        for (link_type, test_link) in test_links.items():
+            wipe_playlist(guild_info.all_time_playlist_uri)
+            wipe_playlist(guild_info.recent_playlist_uri)
+            wipe_playlist(guild_info.buffer_playlist_uri)
+
+            await asyncio.sleep(5)
+
+            # Confirm successful all-time playlist wipe
+            try:
+                if playlist_tracks := sp.playlist_tracks(guild_info.all_time_playlist_uri)['items']:
+                    logging.error("Failed to clear playlist id: " + 
+                        guild_info.all_time_playlist_uri +
+                        ". The following songs remain on the playlist:\n" +
+                        str(playlist_tracks)
+                    )
+                    continue
+
+            except spotipy.SpotifyException:
+                logging.error("Exception raised when attempting to clear playlist id: "+
+                    guild_info.all_time_playlist_uri,
+                    exc_info=True
+                )
+                continue
+            
+            if not (channel := discord_client.get_channel(guild_info.channel_id)):
+                logging.error("Cannot find Discord channel with id: " + 
+                    str(guild_info.channel_id) +
+                    " - check that discord bot has been added to server."
+                    " Follow Discord OAuth process described in readme to add bot to server.")
+                continue
+
+            # Message channel
+            await channel.send("!debug " + test_link)
+
+            await asyncio.sleep(5)
+
+            # Confirm songs were successfully added
+            try:
+                if not(playlist_tracks := sp.playlist_tracks(guild_info.all_time_playlist_uri)['items']):
+                    logging.error("Failed to add songs from uri: " +
+                        guild_info.all_time_playlist_uri +
+                        ". Playlist appears empty"
+                    )
+                    continue
+                
+                if link_type == "track":
+                    if test_link != playlist_tracks[0]['track']['external_urls']['spotify']:
+                        logging.error("Track id: " +
+                            test_link +
+                            "was not successfully added. Current playlist tracks: " +
+                            str(playlist_tracks) 
+                        )
+                
+                elif link_type == "album":
+                    if test_link != playlist_tracks[0]['track']['album']['external_urls']['spotify']:
+                        logging.error("Album id: " +
+                            test_link +
+                            "was not successfully added. Current playlist tracks: " +
+                            str(playlist_tracks) 
+                        )
+
+                elif link_type == "artist":
+                    if test_link != playlist_tracks[0]['track']['artists'][0]['external_urls']['spotify']:
+                        logging.error("Artist id: " +
+                            test_link +
+                            "was not successfully added. Current playlist tracks: " +
+                            str(playlist_tracks) 
+                        )
+
+                logging.info("Connection test successful for link: " + test_link)
+
+            except spotipy.SpotifyException:
+                logging.error("Exception raised when attempting to add uri: " +
+                    test_link +
+                    " to playlist id: " +
+                    guild_info.all_time_playlist_uri,
+                    exc_info=True
+                )
 
 
 # Start Discord bot

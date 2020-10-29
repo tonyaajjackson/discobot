@@ -5,8 +5,10 @@
       "channel_id": ,
       "all_time_playlist_uri": "",
       "recent_playlist_uri": "",
-      "buffer_playlist_uri": ""
+      "buffer_playlist_uri": "",
+      "is_connection_testing_guild": false
     }
   ],
   "playlist_update_cron_expr": "",
+  "monitoring_cron_expr": ""
 }
