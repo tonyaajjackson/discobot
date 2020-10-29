@@ -48,7 +48,7 @@ sp = spotipy.Spotify(
 
 # Set up discord connection
 discord_client = discord.Client()
-spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([^\n ]+)\?")
+spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([A-Za-z0-9]{22})")
 
 # Discord functions
 @discord_client.event
