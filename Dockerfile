@@ -12,6 +12,7 @@ FROM base AS runtime
 COPY --from=python-deps /.venv /.venv
 ENV PATH="/.venv/bin:$PATH"
 COPY config.json .
+COPY secrets.json .
 COPY discobot.py .
 COPY .cache .
 
