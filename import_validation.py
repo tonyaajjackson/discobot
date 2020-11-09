@@ -1,6 +1,7 @@
 import json
 from types import SimpleNamespace
 import sys
+from croniter import croniter
 
 def validate_config(config_path):
     with open(config_path) as f:
@@ -11,7 +12,9 @@ def validate_config(config_path):
     try: 
         assert type(config.guilds) == list
         assert type(config.playlist_update_cron_expr) == str
+        assert croniter.is_valid(config.playlist_update_cron_expr)
         assert type(config.monitoring_cron_expr) == str
+        assert croniter.is_valid(config.monitoring_cron_expr)
     except AttributeError as e:
         raise type(e)("Config.json is missing property " + get_missing_property(e))
 
