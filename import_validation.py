@@ -8,7 +8,12 @@ def validate_config(config_path):
         # Lambda above makes JSON load as object, not dictionary.
         # Source: https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
 
-    assert type(config.guilds) == list
+    try: 
+        assert type(config.guilds) == list
+        assert type(config.playlist_update_cron_expr) == str
+        assert type(config.monitoring_cron_expr) == str
+    except AttributeError as e:
+        raise type(e)("Config.json is missing property " + get_missing_property(e))
 
     for (num, guild) in enumerate(config.guilds):
         try:
