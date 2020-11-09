@@ -26,8 +26,17 @@ logging.basicConfig(
 config_path = "config.json"
 secrets_path = "secrets.json"
 
-config = validate_config(config_path)
-secrets = validate_secrets(secrets_path)
+try:
+    config = validate_config(config_path)
+except Exception as e:
+    logging.exception(msg="Could not validate config.json:", exc_info=True)
+    sys.exit()
+
+try:
+    secrets = validate_secrets(secrets_path)
+except Exception as e:
+    logging.exception(msg="Could not validate secrets.json:", exc_info=True)
+    sys.exit()
 
 # Initialize Spotify connection
 spotipy_scope = (
