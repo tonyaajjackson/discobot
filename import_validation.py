@@ -19,13 +19,7 @@ def validate_config(config_path):
             assert type(guild.buffer_playlist_uri) == str
             assert type(guild.is_connection_testing_guild) == bool
         except AttributeError as e:
-            # Pick out which property is missing
-            split_point = str(e).rfind("'", 0, len(str(e)) - 1 ) + 1
-            missing_var = str(e)[split_point:len(str(e)) - 1]
-            raise type(e)("Guild entry #" + str(num) + " in config.json is missing property " + missing_var)
-    
-    assert type(config.playlist_update_cron_expr) == str
-    assert type(config.monitoring_cron_expr) == str
+            raise type(e)("Guild entry #" + str(num) + " in config.json is missing property " + get_missing_property(e))
 
     return config
 
@@ -34,3 +28,9 @@ def validate_secrets(secrets_path):
         secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
 
     return secrets
+
+def get_missing_property(e):
+    # Pick out which property is missing
+    split_point = str(e).rfind("'", 0, len(str(e)) - 1 ) + 1
+    missing_prop = str(e)[split_point:len(str(e)) - 1]
+    return missing_prop
