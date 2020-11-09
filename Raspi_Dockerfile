@@ -17,6 +17,7 @@ COPY --from=python-deps /.venv /.venv
 ENV PATH="/.venv/bin:$PATH"
 COPY config.json .
 COPY secrets.json .
+COPY import_validation.py .
 COPY discobot.py .
 COPY .cache .
 
