@@ -4,8 +4,6 @@
 import os
 import sys
 import re
-import json
-from types import SimpleNamespace
 
 import discord
 
@@ -17,18 +15,19 @@ import asyncio
 
 import logging
 
+# Discobot modules
+from import_validation import validate_config, validate_secrets
+
 # Environment Setup
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s: %(message)s")
 
-with open("config.json") as f:
-    config = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
-    # Lambda above makes JSON load as object, not dictionary.
-    # Source: https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
+config_path = "config.json"
+secrets_path = "secrets.json"
 
-with open("secrets.json") as f:
-    secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
+config = validate_config(config_path)
+secrets = validate_secrets(secrets_path)
 
 # Initialize Spotify connection
 spotipy_scope = (
