@@ -48,7 +48,7 @@ def validate_config(config_path):
 
             for (name, playlist) in playlists.items():
                 assert type(playlist) == str, \
-                name + " of guild #" + str(num) + " is not a string"
+                    name + " of guild #" + str(num) + " is not a string"
 
                 assert spotify_playlist_regex.findall(playlist) != [], \
                     name + " of guild #" + str(num) + " is not a valid spotify playlist uri"
