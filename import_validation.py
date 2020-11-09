@@ -32,6 +32,16 @@ def validate_secrets(secrets_path):
     with open("secrets.json") as f:
         secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
 
+    try:
+        assert type(secrets.discord) == SimpleNamespace
+        assert type(secrets.discord.token) == str
+        assert type(secrets.spotipy) == SimpleNamespace
+        assert type(secrets.spotipy.client_id) == str
+        assert type(secrets.spotipy.secret) == str
+        assert type(secrets.spotipy.redirect_uri) == str
+    except AttributeError as e:
+        raise type(e)("Secrets.json is missing property " + get_missing_property(e))
+
     return secrets
 
 def get_missing_property(e):
