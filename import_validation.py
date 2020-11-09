@@ -2,6 +2,9 @@ import json
 from types import SimpleNamespace
 import sys
 from croniter import croniter
+import re
+
+spotify_playlist_regex = re.compile(r"spotify:playlist:[A-Za-z0-9]{22}$")
 
 def validate_config(config_path):
     with open(config_path) as f:
@@ -45,6 +48,9 @@ def validate_config(config_path):
             for (name, playlist) in playlists.items():
                 assert type(playlist) == str, \
                 name + " of guild #" + str(num) + " is not a string"
+
+                assert spotify_playlist_regex.findall(playlist) != [], \
+                    name + " of guild #" + str(num) + " is not a valid spotify playlist uri"
             
             assert type(guild.is_connection_testing_guild) == bool, \
                 "is_connection_testing_guild of guild #" + str(num) + " is not a boolean"
