@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import sys
 from croniter import croniter
 import re
+import validators
 
 spotify_playlist_regex = re.compile(r"spotify:playlist:[A-Za-z0-9]{22}$")
 
@@ -76,6 +77,10 @@ def validate_secrets(secrets_path):
         
         assert type(secrets.spotipy.redirect_uri) == str, \
             "spotipy.redirect_uri is not a string"
+
+        assert validators.url(secrets.spotipy.redirect_uri), \
+            "spotipy.redirect_uri is not a valid URL"
+
     except AttributeError as e:
         raise type(e)("Secrets.json is missing property " + get_missing_property(e))
 

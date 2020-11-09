@@ -11,6 +11,7 @@ pylint = "*"
 python-dotenv = "*"
 spotipy = "*"
 aiocron = "*"
+validators = "*"
 
 [requires]
 python_version = "3.8"
