@@ -36,14 +36,15 @@ def validate_config(config_path):
             assert type(guild.channel_id) == int, \
                 "channel_id of guild #" + str(num) + " is not an integer"
             
-            assert type(guild.all_time_playlist_uri) == str, \
-                "all_time_playlist_uri of guild #" + str(num) + " is not a string"
-            
-            assert type(guild.recent_playlist_uri) == str, \
-                "recent_playlist_uri of guild #" + str(num) + " is not a string"
-            
-            assert type(guild.buffer_playlist_uri) == str, \
-                "buffer_playlist_uri of guild #" + str(num) + " is not a string"
+            playlists = {
+                "all_time_playlist_uri": guild.all_time_playlist_uri,
+                "recent_playlist_uri": guild.recent_playlist_uri,
+                "buffer_playlist_uri": guild.buffer_playlist_uri
+            }
+
+            for (name, playlist) in playlists.items():
+                assert type(playlist) == str, \
+                name + " of guild #" + str(num) + " is not a string"
             
             assert type(guild.is_connection_testing_guild) == bool, \
                 "is_connection_testing_guild of guild #" + str(num) + " is not a boolean"
