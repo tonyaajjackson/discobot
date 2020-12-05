@@ -31,17 +31,32 @@ On a configurably regular basis, the bot will:
 
 1. Rename `/template_config.json` to `/config.json`
 
+    `mv ./cache/template_config.json ./cache/config.json`
+
+1. Rename `/template_secrets.json` to `/secrets.json`
+
+    `mv ./cache/template_secrets.json ./cache/secrets.json`
+
 ### Discord
 
 1. Create a Discord bot and connect it to your server by following Discord's tutorial [here](https://discordpy.readthedocs.io/en/latest/discord.html). Make sure the following settings are set:
     * Public bot = false
     * Requires OAUTH2 GRANT = false
 
-1. Copy the bot token into the discord `token` field in `config.json`.
+1. Copy the bot token into the discord `token` field in `secrets.json`.
 
 1. Enable Discord developer mode by following the tutorial [here](https://discordia.me/en/developer-mode).
 
-1. In discord, right click the channel you want to monitor and select "Copy ID", then paste the channel id into the discord `channel_id` field in `config.json` (without quotes)
+1. In Discord, right click the channel you want to monitor and select "Copy ID", then paste the channel id into the discord `monitoring_channel_ids` field in `config.json`. Repeat for each channel you wish to monitor for song links. For example:
+
+    ```
+    "monitoring_channel_ids": [
+        12345,
+        23456
+    ]
+    ```
+
+1. In Discord, right click the channel you want send notifications to and select "Copy ID", then paste the channel id into the discord `notify_channel_id` field in `config.json`.
 
 1. Add the bot to your discord server by following the tutorial [here](https://discordpy.readthedocs.io/en/latest/discord.html#inviting-your-bot). The bot requires these permissions:
     * Send Messages
@@ -51,7 +66,7 @@ On a configurably regular basis, the bot will:
 ### Spotify
 1. Create a Spotify app by following their tutorial [here](https://developer.spotify.com/documentation/general/guides/app-settings/#register-your-app)
 
-1. Copy the app's Client ID and Client Secret to the spotipy `client_id` and `secret` fields in `config.json`
+1. Copy the app's Client ID and Client Secret to the spotipy `client_id` and `secret` fields in `secrets.json`
 
 1. Click "Edit Settings" in the Spotify dashboard, then under "Redirect URIs" fill in "ht<span>tps://localhost/"
 
@@ -65,6 +80,38 @@ On a configurably regular basis, the bot will:
 1. (Optional) Right click on the "Buffer" playlist in Spotify and click "Make Secret"
 
 1. Right click on each playlist and click "Share"->"Copy Spotify URI". Paste each playlist's URI into the corresponding field under spotipy in `config.json`
+
+### Adding Multiple Discord Servers (Guilds)
+1. In `config.json`, copy the guild object in "guilds" and paste it below to create another guild. This example shows config.json with two guilds:
+
+    ```
+    "guilds": [
+    {
+      "_id": 12345,
+      "monitoring_channel_ids": [
+        12345
+      ],
+      "notify_channel_id": 12345,
+      "all_time_playlist_uri": "spotify:playlist:<id>",
+      "recent_playlist_uri": "spotify:playlist:<id>",
+      "buffer_playlist_uri": "spotify:playlist:<id>",
+      "is_connection_testing_guild": false,
+      "testing_channel_id": 12345
+    },
+    {
+      "_id": 54321,
+      "monitoring_channel_ids": [
+        54321
+      ],
+      "notify_channel_id": 54321,
+      "all_time_playlist_uri": "spotify:playlist:<id>",
+      "recent_playlist_uri": "spotify:playlist:<id>",
+      "buffer_playlist_uri": "spotify:playlist:<id>",
+      "is_connection_testing_guild": false,
+      "testing_channel_id": 54321
+    }
+  ],
+  ```
 
 ### "Recent" Playlist Refresh Scheduling
 
@@ -94,13 +141,18 @@ On a configurably regular basis, the bot will:
 1. Copy the URL you are redirected to and paste it into prompt in the command line
 
 ### Docker
-Running the chat bot in a Docker container requires a valid .cache file that will be copied into the Docker container.
+1. Create a config folder to store `config.json`, `secrets.json`, and the Spotify OAuth token between Docker container runs. For example:
+    
+    `mkdir -p /home/$USER/docker/discobot/config`
 
-1. Start the chat bot once from the command line and complete the Spotify OAuth authorization process to create a valid .cache file
-1. Build the Docker container. This will also copy the .cache file into the Docker container
+1. Copy `config.json` and `secrets.json` to the cache folder from step 1.
+
+1. Build the Docker container
     
     `docker build . --tag discobot`
 
-1. Run the docker container
+1. Run the docker container.
 
-    `docker run discobot:latest`
+    `docker run -v <PATH_TO_DOCKER_CONFIG_FOLDER>:/discobot/config -it discobot:latest`
+
+    The `-v` option connects the Spotify OAuth token folder to the container created in step 1. The `-it` option runs the container in interactive mode to allow the user to paste the Spotify OAuth redirect link into the terminal. If a valid Spotify OAuth .cache file exists 

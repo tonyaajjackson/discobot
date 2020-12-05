@@ -9,12 +9,10 @@ RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
 # Make runtime container
 FROM base AS runtime
-COPY --from=python-deps /.venv /.venv
-ENV PATH="/.venv/bin:$PATH"
-COPY config.json .
-COPY secrets.json .
+WORKDIR /discobot
+COPY --from=python-deps /.venv/ .venv/
+ENV PATH="/discobot/.venv/bin:$PATH"
 COPY import_validation.py .
 COPY discobot.py .
-COPY .cache .
 
 ENTRYPOINT ["python", "-u", "discobot.py"]

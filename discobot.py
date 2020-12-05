@@ -26,8 +26,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s: %(message)s")
 
-config_path = "config.json"
-secrets_path = "secrets.json"
+config_path = "./config/config.json"
+secrets_path = "./config/secrets.json"
 
 try:
     config = validate_config(config_path)
@@ -60,7 +60,8 @@ sp = spotipy.Spotify(
         client_secret=secrets.spotipy.secret,
         redirect_uri=secrets.spotipy.redirect_uri,
         scope=spotipy_scope,
-        open_browser=False
+        open_browser=False,
+        cache_path=os.getcwd() + "/config/.cache"
     )
 )
 
