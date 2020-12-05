@@ -84,7 +84,7 @@ async def on_message(message):
         return
 
     if message.author == discord_client.user and message.content[0:6] != "!debug": return
-    if message.channel.id != guild_info.channel_id: return
+    if message.channel.id not in guild_info.monitoring_channel_ids: return
 
     if links :=spotify_link_regex.findall(message.content):
         for link in links:
@@ -171,9 +171,9 @@ async def load_recent_playlist():
         )
         wipe_playlist(guild_info.buffer_playlist_uri)
 
-        if not (channel := discord_client.get_channel(guild_info.channel_id)):
+        if not (channel := discord_client.get_channel(guild_info.notify_channel_id)):
             logging.error("Cannot find Discord channel with id: " + 
-                str(guild_info.channel_id) +
+                str(guild_info.notify_channel_id) +
                 " - check that discord bot has been added to server."
                 " Follow Discord OAuth process described in readme to add bot to server.")
             break
@@ -226,9 +226,9 @@ async def monitor_connection():
                 )
                 continue
             
-            if not (channel := discord_client.get_channel(guild_info.channel_id)):
+            if not (channel := discord_client.get_channel(guild_info.testing_channel_id)):
                 logging.error("Cannot find Discord channel with id: " + 
-                    str(guild_info.channel_id) +
+                    str(guild_info.testing_channel_id) +
                     " - check that discord bot has been added to server."
                     " Follow Discord OAuth process described in readme to add bot to server.")
                 continue

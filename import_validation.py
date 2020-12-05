@@ -37,9 +37,14 @@ def validate_config(config_path):
             assert type(guild._id) == int, \
                 "_id of guild #" + str(num) + " is not an integer"
 
-            assert type(guild.channel_id) == int, \
-                "channel_id of guild #" + str(num) + " is not an integer"
+            assert type(guild.monitoring_channel_ids) == list
+
+            for channel_id in guild.monitoring_channel_ids:
+                assert type(channel_id) == int, \
+                    "channel_id of guild #" + str(num) + ", value: " + str(channel_id) + " is not an integer"
             
+            assert type(guild.notify_channel_id) == int
+
             playlists = {
                 "all_time_playlist_uri": guild.all_time_playlist_uri,
                 "recent_playlist_uri": guild.recent_playlist_uri,
@@ -55,6 +60,11 @@ def validate_config(config_path):
             
             assert type(guild.is_connection_testing_guild) == bool, \
                 "is_connection_testing_guild of guild #" + str(num) + " is not a boolean"
+
+            if guild.is_connection_testing_guild:
+                assert type(guild.testing_channel_id) == int
+            else:
+                assert guild.testing_channel_id is None
             
         except AttributeError as e:
             raise type(e)("Guild entry #" + str(num) + " in config.json is missing property " + get_missing_property(e))
