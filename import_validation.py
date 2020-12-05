@@ -23,11 +23,11 @@ def validate_config(config_path):
         assert croniter.is_valid(config.playlist_update_cron_expr), \
             "config.playlist_update_cron_expr is not a valid cron expression"
         
-        assert type(config.monitoring_cron_expr) == str, \
-            "config.monitoring_cron_expr is not a string"
+        assert type(config.testing_cron_expr) == str, \
+            "config.testing_cron_expr is not a string"
         
-        assert croniter.is_valid(config.monitoring_cron_expr), \
-            "config.monitoring_cron_expr is not a valid cron expression"
+        assert croniter.is_valid(config.testing_cron_expr), \
+            "config.testing_cron_expr is not a valid cron expression"
 
     except AttributeError as e:
         raise type(e)("Config.json is missing property " + get_missing_property(e))

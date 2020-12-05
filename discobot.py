@@ -190,7 +190,7 @@ async def load_recent_playlist():
         )
 
 
-@aiocron.crontab(config.monitoring_cron_expr)
+@aiocron.crontab(config.testing_cron_expr)
 async def monitor_connection():
     debug_guilds = [guild for guild in config.guilds if guild.is_connection_testing_guild]
 
