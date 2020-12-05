@@ -72,7 +72,7 @@ def validate_config(config_path):
     return config
 
 def validate_secrets(secrets_path):
-    with open("secrets.json") as f:
+    with open(secrets_path) as f:
         secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
 
     try:
