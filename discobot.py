@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import logging
 
 import discord
 
@@ -13,7 +14,9 @@ from spotipy.oauth2 import SpotifyOAuth
 import aiocron
 import asyncio
 
-import logging
+from croniter import croniter
+import cron_descriptor
+from datetime import datetime
 
 # Discobot modules
 from import_validation import validate_config, validate_secrets
@@ -31,6 +34,13 @@ try:
 except Exception as e:
     logging.exception(msg="Could not validate config.json:", exc_info=True)
     sys.exit()
+
+# Print cron configuration to debug
+logging.info("Current datetime is" + str(datetime.now()))
+logging.info("Playlist update is scheduled to run: " + cron_descriptor.get_description(config.playlist_update_cron_expr))
+logging.info("Next playlist update scheduled for: " + str(croniter(config.playlist_update_cron_expr).get_next(datetime)))
+logging.info("Monitoring test is scheduled to run: " + cron_descriptor.get_description(config.testing_cron_expr))
+logging.info("Next playlist update scheduled for: " + str(croniter(config.testing_cron_expr).get_next(datetime)))
 
 try:
     secrets = validate_secrets(secrets_path)
