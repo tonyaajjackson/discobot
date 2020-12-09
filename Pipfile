@@ -14,6 +14,7 @@ aiocron = "*"
 validators = "*"
 cron-descriptor = "*"
 croniter = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.8"
