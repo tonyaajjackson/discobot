@@ -9,46 +9,44 @@ spotify_playlist_regex = re.compile(r"spotify:playlist:[A-Za-z0-9]{22}$")
 
 def validate_config(config_path):
     with open(config_path) as f:
-        config = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
-        # Lambda above makes JSON load as object, not dictionary.
-        # Source: https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
+        config = json.load(f)
 
     try: 
-        assert type(config.guilds) == list, \
-            "config.guilds is not a list"
+        assert type(config['guilds']) == list, \
+            "config['guilds'] is not a list"
 
-        assert type(config.playlist_update_cron_expr) == str, \
-            "config.playlist_update_cron_expr is not a string"
+        assert type(config['playlist_update_cron_expr']) == str, \
+            "config['playlist_update_cron_expr'] is not a string"
         
-        assert croniter.is_valid(config.playlist_update_cron_expr), \
-            "config.playlist_update_cron_expr is not a valid cron expression"
+        assert croniter.is_valid(config['playlist_update_cron_expr']), \
+            "config['playlist_update_cron_expr'] is not a valid cron expression"
         
-        assert type(config.testing_cron_expr) == str, \
-            "config.testing_cron_expr is not a string"
+        assert type(config['testing_cron_expr']) == str, \
+            "config['testing_cron_expr'] is not a string"
         
-        assert croniter.is_valid(config.testing_cron_expr), \
-            "config.testing_cron_expr is not a valid cron expression"
+        assert croniter.is_valid(config['testing_cron_expr']), \
+            "config['testing_cron_expr'] is not a valid cron expression"
 
     except AttributeError as e:
-        raise type(e)("Config.json is missing property " + get_missing_property(e))
+        raise type(e)("Config['json'] is missing property " + get_missing_property(e))
 
-    for (num, guild) in enumerate(config.guilds):
+    for (num, guild) in enumerate(config['guilds']):
         try:
-            assert type(guild._id) == int, \
+            assert type(guild['_id']) == int, \
                 "_id of guild #" + str(num) + " is not an integer"
 
-            assert type(guild.monitoring_channel_ids) == list
+            assert type(guild['monitoring_channel_ids']) == list
 
-            for channel_id in guild.monitoring_channel_ids:
+            for channel_id in guild['monitoring_channel_ids']:
                 assert type(channel_id) == int, \
                     "channel_id of guild #" + str(num) + ", value: " + str(channel_id) + " is not an integer"
             
-            assert type(guild.notify_channel_id) == int
+            assert type(guild['notify_channel_id']) == int
 
             playlists = {
-                "all_time_playlist_uri": guild.all_time_playlist_uri,
-                "recent_playlist_uri": guild.recent_playlist_uri,
-                "buffer_playlist_uri": guild.buffer_playlist_uri
+                "all_time_playlist_uri": guild['all_time_playlist_uri'],
+                "recent_playlist_uri": guild['recent_playlist_uri'],
+                "buffer_playlist_uri": guild['buffer_playlist_uri']
             }
 
             for (name, playlist) in playlists.items():
@@ -58,41 +56,41 @@ def validate_config(config_path):
                 assert spotify_playlist_regex.findall(playlist) != [], \
                     name + " of guild #" + str(num) + " is not a valid spotify playlist uri"
             
-            assert type(guild.is_connection_testing_guild) == bool, \
+            assert type(guild['is_connection_testing_guild']) == bool, \
                 "is_connection_testing_guild of guild #" + str(num) + " is not a boolean"
 
-            if guild.is_connection_testing_guild:
-                assert type(guild.testing_channel_id) == int
+            if guild['is_connection_testing_guild']:
+                assert type(guild['testing_channel_id']) == int
             else:
-                assert guild.testing_channel_id is None
+                assert guild['testing_channel_id'] is None
             
         except AttributeError as e:
-            raise type(e)("Guild entry #" + str(num) + " in config.json is missing property " + get_missing_property(e))
+            raise type(e)("Guild entry #" + str(num) + " in config['json'] is missing property " + get_missing_property(e))
 
     return config
 
 def validate_secrets(secrets_path):
     with open(secrets_path) as f:
-        secrets = json.load(f, object_hook=lambda d:SimpleNamespace(**d))
+        secrets = json.load(f)
 
     try:
-        assert type(secrets.discord.token) == str, \
+        assert type(secrets['discord']['token']) == str, \
             "discord.token is not a string"
         
-        assert type(secrets.spotipy.client_id) == str, \
+        assert type(secrets['spotipy']['client_id']) == str, \
             "spotipy.client_id is not a string"
         
-        assert type(secrets.spotipy.secret) == str, \
+        assert type(secrets['spotipy']['secret']) == str, \
             "spotipy.secret is not a string"
         
-        assert type(secrets.spotipy.redirect_uri) == str, \
+        assert type(secrets['spotipy']['redirect_uri']) == str, \
             "spotipy.redirect_uri is not a string"
 
-        assert validators.url(secrets.spotipy.redirect_uri), \
+        assert validators.url(secrets['spotipy']['redirect_uri']), \
             "spotipy.redirect_uri is not a valid URL"
 
     except AttributeError as e:
-        raise type(e)("Secrets.json is missing property " + get_missing_property(e))
+        raise type(e)("Secrets['json'] is missing property " + get_missing_property(e))
 
     return secrets
 
