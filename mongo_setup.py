@@ -21,7 +21,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-if 'path' in args:
+if not args.path is None:
     config_folder = args.path
 else:
     config_folder = "./config/"
