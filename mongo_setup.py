@@ -1,6 +1,7 @@
 # OS/sys
 import sys
 from os import path
+import argparse
 
 # Mongo
 from pymongo import MongoClient
@@ -10,9 +11,18 @@ from pprint import pprint
 from import_validation import validate_config, validate_guilds, validate_secrets
 
 # Get config folder location from command line option
-if len(sys.argv) > 2:
-    if sys.argv[1] == "--path":
-        config_folder = sys.argv[2]
+parser = argparse.ArgumentParser(
+    usage="%(prog)s [OPTION] [VALUE]"
+)
+parser.add_argument(
+    "--path", help="Path to the folder containing config.json, guilds,json, secrets.json",
+    action="store"
+)
+
+args = parser.parse_args()
+
+if 'path' in args:
+    config_folder = args.path
 else:
     config_folder = "./config/"
 
