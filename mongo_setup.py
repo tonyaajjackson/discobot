@@ -20,8 +20,7 @@ guilds = validate_guilds(guilds_path)
 
 connection = MongoClient('mongo-discobot', 27017)
 
-
-mif config['database'] in connection.list_database_names():
+if config['database'] in connection.list_database_names():
     response = input(
         "Database " + str(config['database']) +
         " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
