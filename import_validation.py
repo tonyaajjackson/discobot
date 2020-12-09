@@ -12,9 +12,6 @@ def validate_config(config_path):
         config = json.load(f)
 
     try: 
-        assert type(config['guilds']) == list, \
-            "config['guilds'] is not a list"
-
         assert type(config['playlist_update_cron_expr']) == str, \
             "config['playlist_update_cron_expr'] is not a string"
         
@@ -30,7 +27,16 @@ def validate_config(config_path):
     except AttributeError as e:
         raise type(e)("Config['json'] is missing property " + get_missing_property(e))
 
-    for (num, guild) in enumerate(config['guilds']):
+    return config
+
+def validate_guilds(guilds_path):
+    with open(guilds_path) as f:
+        guilds = json.load(f)
+
+    assert type(guilds) == list, \
+            "guilds is not a list"
+
+    for (num, guild) in enumerate(guilds):
         try:
             assert type(guild['_id']) == int, \
                 "_id of guild #" + str(num) + " is not an integer"
@@ -66,8 +72,8 @@ def validate_config(config_path):
             
         except AttributeError as e:
             raise type(e)("Guild entry #" + str(num) + " in config['json'] is missing property " + get_missing_property(e))
-
-    return config
+    
+    return guilds
 
 def validate_secrets(secrets_path):
     with open(secrets_path) as f:
