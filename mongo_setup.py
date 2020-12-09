@@ -40,18 +40,18 @@ secrets = validate_secrets(secrets_path)
 guilds = validate_guilds(guilds_path)
 
 
-connection = MongoClient('mongo-discobot', 27017)
+connection = MongoClient(config['database_uri'])
 
-if config['database'] in connection.list_database_names():
+if 'discobot' in connection.list_database_names():
     response = input(
-        "Database " + str(config['database']) +
+        "Database at " + str(config['database_uri']) +
         " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
     )
 
     if response.lower() != 'y':
         sys.exit()
 
-    if config['database'] == "prod":
+    if "prod" in config['database_uri']:
         response = input(
             "You're attempting to overwrite the prod database!\n" +
             "There is no way to recover this data after deletion\n" +
@@ -60,10 +60,10 @@ if config['database'] in connection.list_database_names():
         if response.lower() != "overwrite-prod":
             sys.exit()
 
-    connection.drop_database(config['database'])
+    connection.drop_database('discobot')
 
 
-db = connection[config['database']]
+db = connection['discobot']
 
 config_id = db['config'].insert_one(config)
 secrets_id = db['secrets'].insert_one(secrets)
