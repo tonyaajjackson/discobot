@@ -1,5 +1,6 @@
-# Sys
+# OS/sys
 import sys
+from os import path
 
 # Mongo
 from pymongo import MongoClient
@@ -8,10 +9,21 @@ from pprint import pprint
 # Discobot
 from import_validation import validate_config, validate_guilds, validate_secrets
 
+# Get config folder location from command line option
+if len(sys.argv) > 2:
+    if sys.argv[1] == "--path":
+        config_folder = sys.argv[2]
+else:
+    config_folder = "./config/"
+
+if not path.exists(config_folder):
+    print("Invalid path: " + config_folder)
+    sys.exit()
+
 # Load files
-config_path = "./config/config.json"
-secrets_path = "./config/secrets.json"
-guilds_path = "./config/guilds.json"
+config_path = path.join(config_folder, "config.json")
+secrets_path = path.join(config_folder, "secrets.json")
+guilds_path = path.join(config_folder, "guilds.json")
 
 config = validate_config(config_path)
 secrets = validate_secrets(secrets_path)
