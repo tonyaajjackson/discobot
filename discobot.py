@@ -192,12 +192,12 @@ async def load_recent_playlist():
         # Message chat
         await channel.send("Check out all the songs shared recently!\n" +
             "https://open.spotify.com/playlist/" + 
-            guild_info.recent_playlist_uri
+            guild_info['recent_playlist_uri'][len("spotify:playlist:"):]
         )
         
         await channel.send("You can also find all songs ever shared here:\n" + 
             "https://open.spotify.com/playlist/" + 
-            guild_info.all_time_playlist_uri
+            guild_info['all_time_playlist_uri'][len("spotify:playlist:"):]
         )
 
 
