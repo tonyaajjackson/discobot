@@ -38,8 +38,8 @@ def validate_guilds(guilds_path):
 
     for (num, guild) in enumerate(guilds):
         try:
-            assert type(guild['_id']) == int, \
-                "_id of guild #" + str(num) + " is not an integer"
+            assert type(guild['guild_id']) == int, \
+                "guild_id of guild #" + str(num) + " is not an integer"
 
             assert type(guild['monitoring_channel_ids']) == list
 
