@@ -32,13 +32,10 @@ if not path.exists(config_folder):
 
 # Load files
 config_path = path.join(config_folder, "config.json")
-secrets_path = path.join(config_folder, "secrets.json")
 guilds_path = path.join(config_folder, "guilds.json")
 
 config = validate_config(config_path)
-secrets = validate_secrets(secrets_path)
 guilds = validate_guilds(guilds_path)
-
 
 connection = MongoClient(config['database_uri'])
 
@@ -66,5 +63,4 @@ if 'discobot' in connection.list_database_names():
 db = connection['discobot']
 
 config_id = db['config'].insert_one(config)
-secrets_id = db['secrets'].insert_one(secrets)
 guilds_id = db['guilds'].insert_many(guilds)
