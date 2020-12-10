@@ -1,18 +1,6 @@
 {
-  "guilds": [
-    {
-      "_id": ,
-      "monitoring_channel_ids": [
-        
-      ],
-      "notify_channel_id": ,
-      "all_time_playlist_uri": "",
-      "recent_playlist_uri": "",
-      "buffer_playlist_uri": "",
-      "is_connection_testing_guild": ,
-      "testing_channel_id": 
-    },
-  ],
-  "playlist_update_cron_expr": "",
-  "monitoring_cron_expr": ""
+    "playlist_update_cron_expr": "",
+    "monitoring_cron_expr": "",
+    "testing_cron_expr": "",
+    "database_uri": ""
 }
