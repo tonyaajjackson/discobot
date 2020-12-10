@@ -1,6 +1,5 @@
 {
     "playlist_update_cron_expr": "",
-    "monitoring_cron_expr": "",
     "testing_cron_expr": "",
     "database_uri": ""
 }
