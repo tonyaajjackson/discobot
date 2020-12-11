@@ -20,9 +20,8 @@ from datetime import datetime
 
 from import_validation import validate_secrets
 
-from pymongo import MongoClient
+import pymongo
 
-import argparse
 
 # Environment Setup
 logging.basicConfig(
@@ -30,42 +29,30 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s")
 
 
-# Parse command line args
-parser = argparse.ArgumentParser(
-    usage="%(prog)s [OPTION] [VALUE]"
-)
-parser.add_argument(
-    "--mongo-uri", help="MongoDB URI of desired database",
-    action="store"
-)
-parser.add_argument(
-    "--secrets-file", help="Path to discord and spotify secrets file",
-    action="store"
-)
-
-args = parser.parse_args()
+# Set up secrets
+secrets = validate_secrets("./config/secrets.json")
 
 
 # Set up MongoDB connection
-if args.mongo_uri is None:
-    client = MongoClient()
-else:
-    client = MongoClient(args.mongo_uri)
+client = pymongo.MongoClient(
+    host=secrets['mongodb']['uri'],
+    username=secrets['mongodb']['username'],
+    password=secrets['mongodb']['password']
+)
 
-logging.info("Successfully connected to mongodb at:" + args.mongo_uri)
+try:
+    client.server_info()
+except pymongo.errors.ServerSelectionTimeoutError:
+    logging.fatal("Could not connect to mongodb.", exc_info=True)
+    sys.exit()
+
+logging.info("Successfully connected to mongodb at:" + secrets['mongodb']['uri'])
 config = client.discobot.config
 guilds = client.discobot.guilds
 
 
-# Set up discord and spotify secrets
-if args.secrets_file is None:
-    logging.fatal("No secrets file specified")
-    sys.exit()
-
-secrets = validate_secrets(args.secrets_file)
-
 # Print cron configuration to debug
-logging.info("Current datetime is" + str(datetime.now()))
+logging.info("Current datetime is: " + str(datetime.now()))
 logging.info("Playlist update is scheduled to run: " + cron_descriptor.get_description(config.find_one()["playlist_update_cron_expr"]))
 logging.info("Next playlist update scheduled for: " + str(croniter(config.find_one()["playlist_update_cron_expr"]).get_next(datetime)))
 logging.info("Monitoring test is scheduled to run: " + cron_descriptor.get_description(config.find_one()["testing_cron_expr"]))

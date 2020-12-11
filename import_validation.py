@@ -95,6 +95,15 @@ def validate_secrets(secrets_path):
         assert validators.url(secrets['spotipy']['redirect_uri']), \
             "spotipy.redirect_uri is not a valid URL"
 
+        assert type(secrets['mongodb']['uri']) == str, \
+            "mongodb.uri is not a string"
+        
+        assert type(secrets['mongodb']['username']) == str, \
+            "mongodb.username is not a string"
+        
+        assert type(secrets['mongodb']['password']) == str, \
+            "mongodb.password is not a string"
+
     except AttributeError as e:
         raise type(e)("Secrets['json'] is missing property " + get_missing_property(e))
 
