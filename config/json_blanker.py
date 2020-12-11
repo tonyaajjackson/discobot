@@ -28,6 +28,10 @@ def blank_json(input_object):
             return None
 
 
+if len(sys.argv) == 1:
+    print("No files specified")
+    sys.exit()
+
 for arg in sys.argv[1:]:
     with open("./config/" + arg, "r") as f:
         raw = json.load(f)
