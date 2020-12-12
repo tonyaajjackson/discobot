@@ -67,9 +67,9 @@ spotipy_scope = (
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(
-        client_id=secrets['spotipy']['client_id'],
-        client_secret=secrets['spotipy']['secret'],
-        redirect_uri=secrets['spotipy']['redirect_uri'],
+        client_id=secrets['spotify']['client_id'],
+        client_secret=secrets['spotify']['secret'],
+        redirect_uri=secrets['spotify']['redirect_uri'],
         scope=spotipy_scope,
         open_browser=False,
         cache_path=os.getcwd() + "/config/.cache"

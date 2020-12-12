@@ -83,16 +83,16 @@ def validate_secrets(secrets_path):
         assert type(secrets['discord']['token']) == str, \
             "discord.token is not a string"
         
-        assert type(secrets['spotipy']['client_id']) == str, \
+        assert type(secrets['spotify']['client_id']) == str, \
             "spotipy.client_id is not a string"
         
-        assert type(secrets['spotipy']['secret']) == str, \
+        assert type(secrets['spotify']['secret']) == str, \
             "spotipy.secret is not a string"
         
-        assert type(secrets['spotipy']['redirect_uri']) == str, \
+        assert type(secrets['spotify']['redirect_uri']) == str, \
             "spotipy.redirect_uri is not a string"
 
-        assert validators.url(secrets['spotipy']['redirect_uri']), \
+        assert validators.url(secrets['spotify']['redirect_uri']), \
             "spotipy.redirect_uri is not a valid URL"
 
         assert type(secrets['mongodb']['uri']) == str, \
