@@ -66,7 +66,7 @@ On a configurably regular basis, the bot will:
 ### Spotify
 1. Create a Spotify app by following their tutorial [here](https://developer.spotify.com/documentation/general/guides/app-settings/#register-your-app)
 
-1. Copy the app's Client ID and Client Secret to the spotipy `client_id` and `secret` fields in `secrets.json`
+1. Copy the app's Client ID and Client Secret to the spotify `client_id` and `secret` fields in `secrets.json`
 
 1. Click "Edit Settings" in the Spotify dashboard, then under "Redirect URIs" fill in "ht<span>tps://localhost/"
 
@@ -79,7 +79,7 @@ On a configurably regular basis, the bot will:
 
 1. (Optional) Right click on the "Buffer" playlist in Spotify and click "Make Secret"
 
-1. Right click on each playlist and click "Share"->"Copy Spotify URI". Paste each playlist's URI into the corresponding field under spotipy in `config.json`
+1. Right click on each playlist and click "Share"->"Copy Spotify URI". Paste each playlist's URI into the corresponding field under spotify in `config.json`
 
 ### Adding Multiple Discord Servers (Guilds)
 1. In `config.json`, copy the guild object in "guilds" and paste it below to create another guild. This example shows config.json with two guilds:
