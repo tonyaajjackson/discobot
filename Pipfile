@@ -9,12 +9,12 @@ pylint = "*"
 [packages]
 "discord.py" = "*"
 python-dotenv = "*"
-spotipy = "*"
 aiocron = "*"
 validators = "*"
 cron-descriptor = "*"
 croniter = "*"
 pymongo = "*"
+spotipy = {editable = true, git = "https://github.com/tonyaajjackson/spotipy.git"}
 
 [requires]
 python_version = "3.8"
