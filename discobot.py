@@ -19,6 +19,7 @@ import cron_descriptor
 from datetime import datetime
 
 from import_validation import validate_secrets
+from spotify_custom import SpotifyCustom
 
 import pymongo
 
@@ -65,7 +66,7 @@ spotipy_scope = (
     'playlist-modify-private'
 )
 
-sp = spotipy.Spotify(
+sp = SpotifyCustom(
     auth_manager=SpotifyOAuth(
         client_id=secrets['spotify']['client_id'],
         client_secret=secrets['spotify']['secret'],
@@ -115,8 +116,8 @@ async def on_message(message):
             link_id = link[1]
 
             if link_type == "track":
-                add_if_unique_tracks(guild_info['all_time_playlist_uri'], [link_id])
-                add_if_unique_tracks(guild_info['buffer_playlist_uri'], [link_id])
+                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], [link_id])
+                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], [link_id])
 
             if link_type == "album":
                 try:
@@ -125,8 +126,8 @@ async def on_message(message):
                     logging.exception("Error in getting album tracks", exc_info=True)
                     break
 
-                add_if_unique_tracks(guild_info['all_time_playlist_uri'], album_track_ids)
-                add_if_unique_tracks(guild_info['buffer_playlist_uri'], album_track_ids)
+                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], album_track_ids)
+                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], album_track_ids)
 
             if link_type == "artist":
                 try:
@@ -135,64 +136,19 @@ async def on_message(message):
                     logging.exception("Error in getting artist tracks", exc_info=True)
                     break
 
-                add_if_unique_tracks(guild_info['all_time_playlist_uri'], top_song_ids)
-                add_if_unique_tracks(guild_info['buffer_playlist_uri'], top_song_ids)
+                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], top_song_ids)
+                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], top_song_ids)
 
-
-# Spotify functions
-def add_if_unique_tracks(playlist_uri, track_ids):
-    assert type(playlist_uri) == str
-    assert type(track_ids) == list
-
-    try:
-        playlist_tracks = []
-        offset = 0
-
-        while playlist_temp := sp.playlist_items(playlist_uri, offset=offset)['items']:
-            playlist_tracks += playlist_temp
-            offset += 100
-        
-    except spotipy.exceptions.SpotifyException:
-        logging.exception("Error in getting tracks from playlist ID: " + playlist_uri, exc_info=True)
-        return
-
-    playlist_track_ids = set(item['track']['id'] for item in playlist_tracks)
-    unique_track_ids = set(id for id in track_ids if id not in playlist_track_ids)
-    if unique_track_ids:
-        try:
-            sp.playlist_add_items(playlist_uri, list(unique_track_ids))
-        except spotipy.exceptions.SpotifyException:
-            logging.exception("Error in adding tracks to playlist ID: " + playlist_uri, exc_info=True)
-            return
-
-
-def wipe_playlist(playlist_uri):
-    try:
-        while track_ids := [item['track']['id'] for item in sp.playlist_tracks(playlist_uri)['items']]:
-            sp.playlist_remove_all_occurrences_of_items(playlist_uri, track_ids)
-    except spotipy.exceptions.SpotifyException:
-        logging.exception("Error in wiping playlist: " + playlist_uri, exc_info=True)
-        return
-
-def copy_all_playlist_tracks(source_id, dest_id):
-    offset = 0
-    try:
-        while track_ids := [item['track']['id'] for item in sp.playlist_tracks(source_id, offset=offset)['items']]:
-            sp.playlist_add_items(dest_id, track_ids)
-            offset += 100
-    except spotipy.exceptions.SpotifyException:
-        logging.exception("Error in copying tracks from playlist: " + source_id + " to playlist: " + dest_id, exc_info=True)
-        return
 
 @aiocron.crontab(config.find_one()["playlist_update_cron_expr"])
 async def load_recent_playlist():
     for guild_info in guilds.find():
-        wipe_playlist(guild_info['recent_playlist_uri'])
-        copy_all_playlist_tracks(
+        sp.wipe_playlist(guild_info['recent_playlist_uri'])
+        sp.copy_all_playlist_tracks(
             guild_info['buffer_playlist_uri'],
             guild_info['recent_playlist_uri']
         )
-        wipe_playlist(guild_info['buffer_playlist_uri'])
+        sp.wipe_playlist(guild_info['buffer_playlist_uri'])
 
         if not (channel := discord_client.get_channel(guild_info['notify_channel_id'])):
             logging.error("Cannot find Discord channel with id: " + 
@@ -226,9 +182,9 @@ async def monitor_connection():
     for guild_info in debug_guilds:
         logging.info("Beginning connection test of guild: " + str(guild_info['guild_id']))
         for (link_type, test_link) in test_links.items():
-            wipe_playlist(guild_info['all_time_playlist_uri'])
-            wipe_playlist(guild_info['recent_playlist_uri'])
-            wipe_playlist(guild_info['buffer_playlist_uri'])
+            sp.wipe_playlist(guild_info['all_time_playlist_uri'])
+            sp.wipe_playlist(guild_info['recent_playlist_uri'])
+            sp.wipe_playlist(guild_info['buffer_playlist_uri'])
 
             await asyncio.sleep(5)
 
