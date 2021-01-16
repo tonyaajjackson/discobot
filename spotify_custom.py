@@ -2,6 +2,7 @@ import re
 import logging
 
 import spotipy
+from spotipy import CacheHandler
 
 
 class SpotifyCustom(spotipy.Spotify):
@@ -48,3 +49,19 @@ class SpotifyCustom(spotipy.Spotify):
         except spotipy.exceptions.SpotifyException:
             logging.exception("Error in copying tracks from playlist: " + source_id + " to playlist: " + dest_id, exc_info=True)
             return
+
+
+class MongoCacheHandler(CacheHandler):
+    def __init__(self, client, username):
+        self.username = username
+        self.client = client
+
+    def get_cached_token(self):
+        return self.client.discobot.users.find_one({"username": self.username})['spotify_auth_token']
+
+    def save_token_to_cache(self, token):
+        self.client.discobot.users.update_one(
+            {"username": self.username},
+            {"$set": {"spotify_auth_token": token}}
+        )
+        return None

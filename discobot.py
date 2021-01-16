@@ -19,7 +19,7 @@ import cron_descriptor
 from datetime import datetime
 
 from import_validation import validate_secrets
-from spotify_custom import SpotifyCustom
+from spotify_custom import MongoCacheHandler, SpotifyCustom
 
 import pymongo
 
@@ -35,6 +35,7 @@ secrets = validate_secrets("./config/secrets.json")
 
 
 # Set up MongoDB connection
+logging.info("Trying to connect to mongodb at: " + secrets['mongodb']['uri'])
 client = pymongo.MongoClient(
     host=secrets['mongodb']['uri'],
     username=secrets['mongodb']['username'],
@@ -73,7 +74,10 @@ sp = SpotifyCustom(
         redirect_uri=secrets['spotify']['redirect_uri'],
         scope=spotipy_scope,
         open_browser=False,
-        cache_path=os.getcwd() + "/config/.cache"
+        cache_handler=MongoCacheHandler(
+            client=client,
+            username="debug1"
+        )
     )
 )
 
