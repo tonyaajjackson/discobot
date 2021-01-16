@@ -144,3 +144,4 @@ config*.json
 secrets*.json
 guilds*.json
 users*.json
+*.pem
