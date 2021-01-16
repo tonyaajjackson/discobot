@@ -143,3 +143,4 @@ cython_debug/
 config*.json
 secrets*.json
 guilds*.json
+users*.json
