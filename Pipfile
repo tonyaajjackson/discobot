@@ -14,7 +14,7 @@ validators = "*"
 cron-descriptor = "*"
 croniter = "*"
 pymongo = "*"
-spotipy = {editable = true, git = "https://github.com/tonyaajjackson/spotipy.git"}
+spotipy = {git = "https://github.com/plamere/spotipy.git"}
 
 [requires]
 python_version = "3.8"
