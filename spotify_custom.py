@@ -1,5 +1,6 @@
 import re
 import logging
+import json
 
 import spotipy
 from spotipy import CacheHandler
@@ -57,11 +58,16 @@ class MongoCacheHandler(CacheHandler):
         self.client = client
 
     def get_cached_token(self):
-        return self.client.discobot.users.find_one({"username": self.username})['spotify_auth_token']
+        if raw_token := self.client.discobot.users.find_one({"username": self.username})['spotify_auth_token']:
+            return json.loads(raw_token)
+        
+        return None
+        
 
     def save_token_to_cache(self, token):
+        token_string = json.dumps(token)
         self.client.discobot.users.update_one(
             {"username": self.username},
-            {"$set": {"spotify_auth_token": token}}
+            {"$set": {"spotify_auth_token": token_string}}
         )
         return None
