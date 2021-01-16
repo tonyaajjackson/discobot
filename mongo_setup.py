@@ -2,6 +2,7 @@
 import sys
 from os import path
 import argparse
+import json
 
 # Mongo
 from pymongo import MongoClient
@@ -33,22 +34,32 @@ if not path.exists(config_folder):
 # Load files
 config_path = path.join(config_folder, "config.json")
 guilds_path = path.join(config_folder, "guilds.json")
+secrets_path = path.join(config_folder, "secrets.json")
+users_path = path.join(config_folder, "users.json")
 
 config = validate_config(config_path)
 guilds = validate_guilds(guilds_path)
+secrets = validate_secrets(secrets_path)
+# Skip import validation for users as loading from JSON is a temporary measure
+with open(users_path) as f:
+        users = json.load(f)
 
-connection = MongoClient(config['database_uri'])
+client = MongoClient(
+    host=secrets['mongodb']['uri'],
+    username=secrets['mongodb']['username'],
+    password=secrets['mongodb']['password']
+)
 
-if 'discobot' in connection.list_database_names():
+if 'discobot' in client.list_database_names():
     response = input(
-        "Database at " + str(config['database_uri']) +
+        "Database at " + str(secrets['mongodb']['uri']) +
         " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
     )
 
     if response.lower() != 'y':
         sys.exit()
 
-    if "prod" in config['database_uri']:
+    if "prod" in secrets['mongodb']['uri']:
         response = input(
             "You're attempting to overwrite the prod database!\n" +
             "There is no way to recover this data after deletion\n" +
@@ -57,10 +68,11 @@ if 'discobot' in connection.list_database_names():
         if response.lower() != "overwrite-prod":
             sys.exit()
 
-    connection.drop_database('discobot')
+    client.drop_database('discobot')
 
 
-db = connection['discobot']
+db = client['discobot']
 
 config_id = db['config'].insert_one(config)
 guilds_id = db['guilds'].insert_many(guilds)
+users_id = db['users'].insert_many(users)
