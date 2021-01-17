@@ -23,6 +23,8 @@ from spotify_custom import MongoCacheHandler, SpotifyCustom
 
 import pymongo
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 # Environment Setup
 logging.basicConfig(
@@ -30,8 +32,20 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s")
 
 
-# Set up secrets
+# Set up secrets & database keys
 secrets = validate_secrets("./config/secrets.json")
+with open("./config/private_key.pem", "rb") as key_file:
+    private_key = serialization.load_pem_private_key(
+        key_file.read(),
+        password=None,
+        backend=default_backend()
+    )
+
+with open("./config/public_key.pem", "rb") as key_file:
+    public_key = serialization.load_pem_public_key(
+        key_file.read(),
+        backend=default_backend()
+    )
 
 
 # Set up MongoDB connection
@@ -67,6 +81,13 @@ spotipy_scope = (
     'playlist-modify-private'
 )
 
+cache_handler = MongoCacheHandler(
+    client=client,
+    username="debug1",
+    private_key=private_key,
+    public_key=public_key
+)
+
 sp = SpotifyCustom(
     auth_manager=SpotifyOAuth(
         client_id=secrets['spotify']['client_id'],
@@ -74,10 +95,7 @@ sp = SpotifyCustom(
         redirect_uri=secrets['spotify']['redirect_uri'],
         scope=spotipy_scope,
         open_browser=False,
-        cache_handler=MongoCacheHandler(
-            client=client,
-            username="debug1"
-        )
+        cache_handler=cache_handler
     )
 )
 

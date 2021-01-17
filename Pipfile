@@ -15,6 +15,7 @@ cron-descriptor = "*"
 croniter = "*"
 pymongo = "*"
 spotipy = {git = "https://github.com/plamere/spotipy.git"}
+cryptography = "*"
 
 [requires]
 python_version = "3.8"
