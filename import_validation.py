@@ -4,6 +4,9 @@ import sys
 from croniter import croniter
 import re
 import validators
+from os import path
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 spotify_playlist_regex = re.compile(r"spotify:playlist:[A-Za-z0-9]{22}$")
 
@@ -76,7 +79,7 @@ def validate_guilds(guilds_path):
     return guilds
 
 def validate_secrets(secrets_path):
-    with open(secrets_path) as f:
+    with open(path.join(secrets_path, "secrets.json")) as f:
         secrets = json.load(f)
 
     try:
@@ -106,6 +109,19 @@ def validate_secrets(secrets_path):
 
     except AttributeError as e:
         raise type(e)("Secrets['json'] is missing property " + get_missing_property(e))
+
+    with open(path.join(secrets_path, "private_key.pem"), "rb") as key_file:
+        secrets['private_key'] = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None,
+            backend=default_backend()
+        )
+
+    with open(path.join(secrets_path, "public_key.pem"), "rb") as key_file:
+        secrets['public_key'] = serialization.load_pem_public_key(
+            key_file.read(),
+            backend=default_backend()
+        )
 
     return secrets
 
