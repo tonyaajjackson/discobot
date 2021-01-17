@@ -145,3 +145,4 @@ secrets*.json
 guilds*.json
 users*.json
 *.pem
+debug*.py
