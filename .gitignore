@@ -150,6 +150,7 @@ users*.json
 # Docker compose
 docker-compose.yml
 docker-compose.yaml
+debug_volumes/*
 
 # Misc
 debug*.py

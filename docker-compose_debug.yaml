@@ -1,0 +1,50 @@
+---
+version: "3.8"
+services:
+  chatbot:
+    container_name: chatbot
+    build:
+      context: ./chatbot/
+    environment:
+      - MONGO_URI=mongodb://mongo-debug-discobot:27017 # Change this for production
+    volumes:
+      - ./chatbot/config/:/chatbot/config
+    restart: unless-stopped
+    networks:
+      - discobot
+    depends_on:
+      - mongodb
+    # Allows completing spotify OAuth process via terminal:
+    stdin_open: true
+    tty: true
+
+  mongodb:
+    container_name: mongo-debug-discobot # Change this for production
+    image: mongo
+    volumes:
+      - ./debug_volumes/mongo-debug:/data/db # Change this for production
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoadmin # Change this for production
+      - MONGO_INITDB_ROOT_PASSWORD=mongopassword # Change this for production
+    networks:
+      - discobot
+    # Remove port forwarding below for production. This port forward exposes
+    # the mongodb at localhost:27017, which allows interactive manipulation
+    # of data in the database from the host computer.
+    ports:
+      - 27017:27017
+
+  # Disable Mongo-Express for production use
+  mongo-express:
+    image: mongo-express
+    networks:
+      - discobot
+    ports:
+      - 8082:8081
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo-debug-discobot # Change this for production
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongoadmin # Change this for production
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongopassword # Change this for production
+
+networks:
+  discobot:

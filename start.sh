@@ -1,0 +1,1 @@
+docker-compose -f docker-compose_debug.yaml up -d && docker attach chatbot

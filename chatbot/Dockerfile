@@ -5,14 +5,15 @@ FROM base AS python-deps
 RUN pip install pipenv
 COPY Pipfile .
 COPY Pipfile.lock .
-RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
+RUN apt-get update && apt-get install git -y && PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
 # Make runtime container
 FROM base AS runtime
-WORKDIR /discobot
+WORKDIR /chatbot
 COPY --from=python-deps /.venv/ .venv/
-ENV PATH="/discobot/.venv/bin:$PATH"
+ENV PATH="/chatbot/.venv/bin:$PATH"
 COPY import_validation.py .
-COPY discobot.py .
+COPY spotify_custom.py .
+COPY chatbot.py .
 
-ENTRYPOINT ["python", "-u", "discobot.py"]
+ENTRYPOINT ["python", "-u", "chatbot.py"]
