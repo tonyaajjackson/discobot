@@ -58,29 +58,9 @@ logging.info("Next playlist update scheduled for: " + str(croniter(config.find_o
 logging.info("Monitoring test is scheduled to run: " + cron_descriptor.get_description(config.find_one()["testing_cron_expr"]))
 logging.info("Next playlist update scheduled for: " + str(croniter(config.find_one()["testing_cron_expr"]).get_next(datetime)))
 
-
-# Initialize Spotify connection
 spotipy_scope = (
     'playlist-modify-public' + ' ' +
     'playlist-modify-private'
-)
-
-cache_handler = MongoCacheHandler(
-    client=client,
-    username="debug1",
-    private_key=secrets['private_key'],
-    public_key=secrets['public_key']
-)
-
-sp = SpotifyCustom(
-    auth_manager=SpotifyOAuth(
-        client_id=secrets['spotify']['client_id'],
-        client_secret=secrets['spotify']['secret'],
-        redirect_uri=secrets['spotify']['redirect_uri'],
-        scope=spotipy_scope,
-        open_browser=False,
-        cache_handler=cache_handler
-    )
 )
 
 # Set up discord connection
@@ -91,6 +71,27 @@ spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([A-Za-
 @discord_client.event
 async def on_ready():
     logging.info(f'{discord_client.user} is connected')
+
+    # Get a testing guild for testing the connection to Spotify
+    testing_guild = guilds.find_one({"is_connection_testing_guild": True})
+
+    cache_handler = MongoCacheHandler(
+        client=client,
+        username=testing_guild['username'],
+        private_key=secrets['private_key'],
+        public_key=secrets['public_key']
+    )
+
+    sp = SpotifyCustom(
+        auth_manager=SpotifyOAuth(
+            client_id=secrets['spotify']['client_id'],
+            client_secret=secrets['spotify']['secret'],
+            redirect_uri=secrets['spotify']['redirect_uri'],
+            scope=spotipy_scope,
+            open_browser=False,
+            cache_handler=cache_handler
+        )
+    )
 
     # Test Spotify connection and trigger Spotify OAuth setup if not already authorized
     try:
@@ -116,6 +117,24 @@ async def on_message(message):
     if message.author == discord_client.user and message.content[0:6] != "!debug": return
     if message.channel.id not in guild_info['monitoring_channel_ids']: return
 
+    cache_handler = MongoCacheHandler(
+        client=client,
+        username=guild_info['username'],
+        private_key=secrets['private_key'],
+        public_key=secrets['public_key']
+    )
+
+    sp = SpotifyCustom(
+        auth_manager=SpotifyOAuth(
+            client_id=secrets['spotify']['client_id'],
+            client_secret=secrets['spotify']['secret'],
+            redirect_uri=secrets['spotify']['redirect_uri'],
+            scope=spotipy_scope,
+            open_browser=False,
+            cache_handler=cache_handler
+        )
+    )
+    
     if links :=spotify_link_regex.findall(message.content):
         for link in links:
             link_type = link[0]
@@ -149,6 +168,26 @@ async def on_message(message):
 @aiocron.crontab(config.find_one()["playlist_update_cron_expr"])
 async def load_recent_playlist():
     for guild_info in guilds.find():
+        logging.info("Updating guild with id: " + str(guild_info["guild_id"]))
+        logging.info("Attempting to get Spotify Auth token for user: " + guild_info["username"])
+        cache_handler = MongoCacheHandler(
+            client=client,
+            username=guild_info['username'],
+            private_key=secrets['private_key'],
+            public_key=secrets['public_key']
+        )
+
+        sp = SpotifyCustom(
+            auth_manager=SpotifyOAuth(
+                client_id=secrets['spotify']['client_id'],
+                client_secret=secrets['spotify']['secret'],
+                redirect_uri=secrets['spotify']['redirect_uri'],
+                scope=spotipy_scope,
+                open_browser=False,
+                cache_handler=cache_handler
+            )
+        )
+        
         sp.wipe_playlist(guild_info['recent_playlist_uri'])
         sp.copy_all_playlist_tracks(
             guild_info['buffer_playlist_uri'],
@@ -187,6 +226,25 @@ async def monitor_connection():
 
     for guild_info in debug_guilds:
         logging.info("Beginning connection test of guild: " + str(guild_info['guild_id']))
+
+        logging.info("Attempting to get Spotify Auth token for user: " + guild_info["username"])
+        cache_handler = MongoCacheHandler(
+            client=client,
+            username=guild_info['username'],
+            private_key=secrets['private_key'],
+            public_key=secrets['public_key']
+        )
+
+        sp = SpotifyCustom(
+            auth_manager=SpotifyOAuth(
+                client_id=secrets['spotify']['client_id'],
+                client_secret=secrets['spotify']['secret'],
+                redirect_uri=secrets['spotify']['redirect_uri'],
+                scope=spotipy_scope,
+                open_browser=False,
+                cache_handler=cache_handler
+            )
+        )
         for (link_type, test_link) in test_links.items():
             sp.wipe_playlist(guild_info['all_time_playlist_uri'])
             sp.wipe_playlist(guild_info['recent_playlist_uri'])
