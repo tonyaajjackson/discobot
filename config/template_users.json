@@ -1,10 +1,18 @@
 [
     {
         "username": "",
-        "spotify_auth_token": null
+        "spotify_auth_token": null,
+        "encrypted_fernet_key": null,
+        "guilds": [
+            0
+        ]
     },
     {
         "username": "",
-        "spotify_auth_token": null
+        "spotify_auth_token": null,
+        "encrypted_fernet_key": null,
+        "guilds": [
+            0
+        ]
     }
 ]

@@ -10,7 +10,7 @@
         "buffer_playlist_uri": "",
         "is_connection_testing_guild": false,
         "testing_channel_id": 0,
-        "user": ""
+        "username": ""
     },
     {
         "guild_id": 0,
@@ -23,6 +23,6 @@
         "buffer_playlist_uri": "",
         "is_connection_testing_guild": false,
         "testing_channel_id": null,
-        "user": ""
+        "username": ""
     }
 ]
