@@ -78,8 +78,8 @@ def validate_guilds(guilds_path):
     
     return guilds
 
-def validate_secrets(secrets_path):
-    with open(path.join(secrets_path, "secrets.json")) as f:
+def validate_secrets(secrets_folder_path):
+    with open(path.join(secrets_folder_path, "secrets.json")) as f:
         secrets = json.load(f)
 
     try:
@@ -110,14 +110,14 @@ def validate_secrets(secrets_path):
     except AttributeError as e:
         raise type(e)("Secrets['json'] is missing property " + get_missing_property(e))
 
-    with open(path.join(secrets_path, "private_key.pem"), "rb") as key_file:
+    with open(path.join(secrets_folder_path, "private_key.pem"), "rb") as key_file:
         secrets['private_key'] = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
             backend=default_backend()
         )
 
-    with open(path.join(secrets_path, "public_key.pem"), "rb") as key_file:
+    with open(path.join(secrets_folder_path, "public_key.pem"), "rb") as key_file:
         secrets['public_key'] = serialization.load_pem_public_key(
             key_file.read(),
             backend=default_backend()

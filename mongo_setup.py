@@ -34,12 +34,11 @@ if not path.exists(config_folder):
 # Load files
 config_path = path.join(config_folder, "config.json")
 guilds_path = path.join(config_folder, "guilds.json")
-secrets_path = path.join(config_folder, "secrets.json")
 users_path = path.join(config_folder, "users.json")
 
 config = validate_config(config_path)
 guilds = validate_guilds(guilds_path)
-secrets = validate_secrets(secrets_path)
+secrets = validate_secrets(config_folder)
 # Skip import validation for users as loading from JSON is a temporary measure
 with open(users_path) as f:
         users = json.load(f)
