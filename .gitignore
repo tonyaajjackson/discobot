@@ -140,9 +140,16 @@ cython_debug/
 # VS code
 .vscode/
 
+# Chatbot files
 config*.json
 secrets*.json
 guilds*.json
 users*.json
 *.pem
+
+# Docker compose
+docker-compose.yml
+docker-compose.yaml
+
+# Misc
 debug*.py
