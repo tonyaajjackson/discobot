@@ -30,7 +30,7 @@ logging.basicConfig(
 
 
 # Set up secrets
-secrets = validate_secrets("./config")
+secrets = validate_secrets()
 
 # Set up MongoDB connection
 logging.info("Trying to connect to mongodb at: " + secrets['MONGO_HOSTNAME'] +
@@ -80,8 +80,8 @@ async def on_ready():
     cache_handler = MongoCacheHandler(
         client=client,
         username=testing_guild['username'],
-        private_key=secrets['private_key'],
-        public_key=secrets['public_key']
+        private_key=secrets['RSA_PRIVATE_KEY'],
+        public_key=secrets['RSA_PUBLIC_KEY']
     )
 
     sp = SpotifyCustom(
@@ -122,8 +122,8 @@ async def on_message(message):
     cache_handler = MongoCacheHandler(
         client=client,
         username=guild_info['username'],
-        private_key=secrets['private_key'],
-        public_key=secrets['public_key']
+        private_key=secrets['RSA_PRIVATE_KEY'],
+        public_key=secrets['RSA_PUBLIC_KEY']
     )
 
     sp = SpotifyCustom(
@@ -175,8 +175,8 @@ async def load_recent_playlist():
         cache_handler = MongoCacheHandler(
             client=client,
             username=guild_info['username'],
-            private_key=secrets['private_key'],
-            public_key=secrets['public_key']
+            private_key=secrets['RSA_PRIVATE_KEY'],
+            public_key=secrets['RSA_PUBLIC_KEY']
         )
 
         sp = SpotifyCustom(
@@ -233,8 +233,8 @@ async def monitor_connection():
         cache_handler = MongoCacheHandler(
             client=client,
             username=guild_info['username'],
-            private_key=secrets['private_key'],
-            public_key=secrets['public_key']
+            private_key=secrets['RSA_PRIVATE_KEY'],
+            public_key=secrets['RSA_PUBLIC_KEY']
         )
 
         sp = SpotifyCustom(

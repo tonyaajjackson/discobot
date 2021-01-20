@@ -14,8 +14,8 @@ services:
       - MONGO_PORT=${MONGO_PORT}
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    volumes:
-      - ./chatbot/config/:/chatbot/config
+      - RSA_PRIVATE_KEY=${RSA_PRIVATE_KEY}
+      - RSA_PUBLIC_KEY=${RSA_PUBLIC_KEY}
     restart: unless-stopped
     networks:
       - discobot
