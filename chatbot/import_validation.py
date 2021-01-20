@@ -70,9 +70,3 @@ def validate_secrets():
     )
 
     return secrets
-
-def get_missing_property(e):
-    # Pick out which property is missing
-    split_point = str(e).rfind("'", 0, len(str(e)) - 1 ) + 1
-    missing_prop = str(e)[split_point:len(str(e)) - 1]
-    return missing_prop
