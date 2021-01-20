@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,12 +76,14 @@ WSGI_APPLICATION = 'django_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
+        'ENGINE': 'djongo',
+        'NAME': os.environ['MONGO_HOSTNAME'],
+        'CLIENT': {
+            'host': os.environ['MONGO_HOSTNAME'],
+            'port': int(os.environ['MONGO_PORT']),
+            'username': os.environ['MONGO_INITDB_ROOT_USERNAME'],
+            'password': os.environ['MONGO_INITDB_ROOT_PASSWORD']
+        }
     }
 }
 

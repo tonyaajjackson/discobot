@@ -55,12 +55,6 @@ services:
       - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
 
   # ==== BACKEND ====
-  db:
-    image: postgres
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
   web:
     build: ./backend
     command: python manage.py runserver 0.0.0.0:8000
@@ -69,7 +63,14 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - mongodb
+    environment:
+      - MONGO_HOSTNAME=${MONGO_HOSTNAME}
+      - MONGO_PORT=${MONGO_PORT}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - discobot
 
 networks:
   discobot:
