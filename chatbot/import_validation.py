@@ -1,123 +1,71 @@
 import json
-from types import SimpleNamespace
-import sys
-from croniter import croniter
-import re
 import validators
-from os import path
+import sys
+import os
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
-spotify_playlist_regex = re.compile(r"spotify:playlist:[A-Za-z0-9]{22}$")
-
-def validate_config(config_path):
-    with open(config_path) as f:
-        config = json.load(f)
-
-    try: 
-        assert type(config['playlist_update_cron_expr']) == str, \
-            "config['playlist_update_cron_expr'] is not a string"
-        
-        assert croniter.is_valid(config['playlist_update_cron_expr']), \
-            "config['playlist_update_cron_expr'] is not a valid cron expression"
-        
-        assert type(config['testing_cron_expr']) == str, \
-            "config['testing_cron_expr'] is not a string"
-        
-        assert croniter.is_valid(config['testing_cron_expr']), \
-            "config['testing_cron_expr'] is not a valid cron expression"
-
-    except AttributeError as e:
-        raise type(e)("Config['json'] is missing property " + get_missing_property(e))
-
-    return config
-
-def validate_guilds(guilds_path):
-    with open(guilds_path) as f:
-        guilds = json.load(f)
-
-    assert type(guilds) == list, \
-            "guilds is not a list"
-
-    for (num, guild) in enumerate(guilds):
-        try:
-            assert type(guild['guild_id']) == int, \
-                "guild_id of guild #" + str(num) + " is not an integer"
-
-            assert type(guild['monitoring_channel_ids']) == list
-
-            for channel_id in guild['monitoring_channel_ids']:
-                assert type(channel_id) == int, \
-                    "channel_id of guild #" + str(num) + ", value: " + str(channel_id) + " is not an integer"
-            
-            assert type(guild['notify_channel_id']) == int
-
-            playlists = {
-                "all_time_playlist_uri": guild['all_time_playlist_uri'],
-                "recent_playlist_uri": guild['recent_playlist_uri'],
-                "buffer_playlist_uri": guild['buffer_playlist_uri']
-            }
-
-            for (name, playlist) in playlists.items():
-                assert type(playlist) == str, \
-                    name + " of guild #" + str(num) + " is not a string"
-
-                assert spotify_playlist_regex.findall(playlist) != [], \
-                    name + " of guild #" + str(num) + " is not a valid spotify playlist uri"
-            
-            assert type(guild['is_connection_testing_guild']) == bool, \
-                "is_connection_testing_guild of guild #" + str(num) + " is not a boolean"
-
-            if guild['is_connection_testing_guild']:
-                assert type(guild['testing_channel_id']) == int
-            else:
-                assert guild['testing_channel_id'] is None
-            
-        except AttributeError as e:
-            raise type(e)("Guild entry #" + str(num) + " in config['json'] is missing property " + get_missing_property(e))
-    
-    return guilds
 
 def validate_secrets(secrets_folder_path):
-    with open(path.join(secrets_folder_path, "secrets.json")) as f:
-        secrets = json.load(f)
+    secrets = {}
 
+    # Environment variables
     try:
-        assert type(secrets['discord']['token']) == str, \
-            "discord.token is not a string"
-        
-        assert type(secrets['spotify']['client_id']) == str, \
-            "spotipy.client_id is not a string"
-        
-        assert type(secrets['spotify']['secret']) == str, \
-            "spotipy.secret is not a string"
-        
-        assert type(secrets['spotify']['redirect_uri']) == str, \
-            "spotipy.redirect_uri is not a string"
+        environment_variables = [
+            "DISCORD_TOKEN",
+            "SPOTIFY_CLIENT_ID",
+            "SPOTIFY_CLIENT_SECRET",
+            "SPOTIFY_REDIRECT_URI",
+            "MONGO_HOSTNAME",
+            "MONGO_PORT",
+            "MONGO_INITDB_ROOT_USERNAME",
+            "MONGO_INITDB_ROOT_PASSWORD"
+        ]
 
-        assert validators.url(secrets['spotify']['redirect_uri']), \
-            "spotipy.redirect_uri is not a valid URL"
-
-        assert type(secrets['mongodb']['uri']) == str, \
-            "mongodb.uri is not a string"
+        for var in environment_variables:
+            secrets[var] = os.environ[var]
         
-        assert type(secrets['mongodb']['username']) == str, \
-            "mongodb.username is not a string"
+        secrets['MONGO_PORT'] = int(secrets['MONGO_PORT'])
+
+    except KeyError(e):
+        raise type(e)("Environment is missing variable " + var)
+
+    assert type(secrets['DISCORD_TOKEN']) == str, \
+        "DISCORD_TOKEN is not a string"
+    
+    assert type(secrets['SPOTIFY_CLIENT_ID']) == str, \
+        "SPOTIFY_CLIENT_ID is not a string"
+    
+    assert type(secrets['SPOTIFY_CLIENT_SECRET']) == str, \
+        "SPOTIFY_CLIENT_SECRET is not a string"
+    
+    assert type(secrets['SPOTIFY_REDIRECT_URI']) == str, \
+        "SPOTIFY_REDIRECT_URI is not a string"
+
+    assert validators.url(secrets['SPOTIFY_REDIRECT_URI']), \
+        "SPOTIFY_REDIRECT_URI is not a valid URL"
+
+    assert type(secrets['MONGO_HOSTNAME']) == str, \
+        "MONGO_HOSTNAME is not a string"
+
+    assert type(secrets['MONGO_PORT']) == int, \
+        "MONGO_PORT is not an integer"
+    
+    assert type(secrets['MONGO_INITDB_ROOT_USERNAME']) == str, \
+        "MONGO_INITDB_ROOT_USERNAME is not a string"
+    
+    assert type(secrets['MONGO_INITDB_ROOT_PASSWORD']) == str, \
+        "MONGO_INITDB_ROOT_PASSWORD is not a string"
         
-        assert type(secrets['mongodb']['password']) == str, \
-            "mongodb.password is not a string"
-
-    except AttributeError as e:
-        raise type(e)("Secrets['json'] is missing property " + get_missing_property(e))
-
-    with open(path.join(secrets_folder_path, "private_key.pem"), "rb") as key_file:
+    # RSA keys
+    with open(os.path.join(secrets_folder_path, "private_key.pem"), "rb") as key_file:
         secrets['private_key'] = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
             backend=default_backend()
         )
 
-    with open(path.join(secrets_folder_path, "public_key.pem"), "rb") as key_file:
+    with open(os.path.join(secrets_folder_path, "public_key.pem"), "rb") as key_file:
         secrets['public_key'] = serialization.load_pem_public_key(
             key_file.read(),
             backend=default_backend()

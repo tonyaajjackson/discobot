@@ -6,7 +6,14 @@ services:
     build:
       context: ./chatbot/
     environment:
-      - MONGO_URI=mongodb://mongo-debug-discobot:27017 # Change this for production
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI}
+      - MONGO_HOSTNAME=${MONGO_HOSTNAME}
+      - MONGO_PORT=${MONGO_PORT}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - ./chatbot/config/:/chatbot/config
     restart: unless-stopped
@@ -19,13 +26,13 @@ services:
     tty: true
 
   mongodb:
-    container_name: mongo-debug-discobot # Change this for production
+    container_name: ${MONGO_HOSTNAME}
     image: mongo
     volumes:
       - ./debug_volumes/mongo-debug:/data/db # Change this for production
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongoadmin # Change this for production
-      - MONGO_INITDB_ROOT_PASSWORD=mongopassword # Change this for production
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     networks:
       - discobot
     # Remove port forwarding below for production. This port forward exposes
@@ -42,9 +49,10 @@ services:
     ports:
       - 8082:8081
     environment:
-      - ME_CONFIG_MONGODB_SERVER=mongo-debug-discobot # Change this for production
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongoadmin # Change this for production
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongopassword # Change this for production
+      - ME_CONFIG_MONGODB_SERVER=${MONGO_HOSTNAME}
+      - ME_CONFIG_MONGODB_PORT=${MONGO_PORT}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
 
 networks:
   discobot:

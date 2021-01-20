@@ -106,6 +106,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env*
 .venv
 env/
 venv/
@@ -147,10 +148,6 @@ guilds*.json
 users*.json
 *.pem
 
-# Docker compose
-docker-compose.yml
-docker-compose.yaml
-debug_volumes/*
-
 # Misc
 debug*.py
+debug_volumes/*

@@ -33,11 +33,13 @@ logging.basicConfig(
 secrets = validate_secrets("./config")
 
 # Set up MongoDB connection
-logging.info("Trying to connect to mongodb at: " + secrets['mongodb']['uri'])
+logging.info("Trying to connect to mongodb at: " + secrets['MONGO_HOSTNAME'] +
+    " on port " + str(secrets['MONGO_PORT']))
 client = pymongo.MongoClient(
-    host=secrets['mongodb']['uri'],
-    username=secrets['mongodb']['username'],
-    password=secrets['mongodb']['password']
+    host=secrets['MONGO_HOSTNAME'],
+    port=secrets['MONGO_PORT'],
+    username=secrets['MONGO_INITDB_ROOT_USERNAME'],
+    password=secrets['MONGO_INITDB_ROOT_PASSWORD']
 )
 
 try:
@@ -46,7 +48,7 @@ except pymongo.errors.ServerSelectionTimeoutError:
     logging.fatal("Could not connect to mongodb.", exc_info=True)
     sys.exit()
 
-logging.info("Successfully connected to mongodb at:" + secrets['mongodb']['uri'])
+logging.info("Successfully connected to mongodb.")
 config = client.discobot.config
 guilds = client.discobot.guilds
 
@@ -84,9 +86,9 @@ async def on_ready():
 
     sp = SpotifyCustom(
         auth_manager=SpotifyOAuth(
-            client_id=secrets['spotify']['client_id'],
-            client_secret=secrets['spotify']['secret'],
-            redirect_uri=secrets['spotify']['redirect_uri'],
+            client_id=secrets['SPOTIFY_CLIENT_ID'],
+            client_secret=secrets['SPOTIFY_CLIENT_SECRET'],
+            redirect_uri=secrets['SPOTIFY_REDIRECT_URI'],
             scope=spotipy_scope,
             open_browser=False,
             cache_handler=cache_handler
@@ -126,9 +128,9 @@ async def on_message(message):
 
     sp = SpotifyCustom(
         auth_manager=SpotifyOAuth(
-            client_id=secrets['spotify']['client_id'],
-            client_secret=secrets['spotify']['secret'],
-            redirect_uri=secrets['spotify']['redirect_uri'],
+            client_id=secrets['SPOTIFY_CLIENT_ID'],
+            client_secret=secrets['SPOTIFY_CLIENT_SECRET'],
+            redirect_uri=secrets['SPOTIFY_REDIRECT_URI'],
             scope=spotipy_scope,
             open_browser=False,
             cache_handler=cache_handler
@@ -179,9 +181,9 @@ async def load_recent_playlist():
 
         sp = SpotifyCustom(
             auth_manager=SpotifyOAuth(
-                client_id=secrets['spotify']['client_id'],
-                client_secret=secrets['spotify']['secret'],
-                redirect_uri=secrets['spotify']['redirect_uri'],
+                client_id=secrets['SPOTIFY_CLIENT_ID'],
+                client_secret=secrets['SPOTIFY_CLIENT_SECRET'],
+                redirect_uri=secrets['SPOTIFY_REDIRECT_URI'],
                 scope=spotipy_scope,
                 open_browser=False,
                 cache_handler=cache_handler
@@ -237,9 +239,9 @@ async def monitor_connection():
 
         sp = SpotifyCustom(
             auth_manager=SpotifyOAuth(
-                client_id=secrets['spotify']['client_id'],
-                client_secret=secrets['spotify']['secret'],
-                redirect_uri=secrets['spotify']['redirect_uri'],
+                client_id=secrets['SPOTIFY_CLIENT_ID'],
+                client_secret=secrets['SPOTIFY_CLIENT_SECRET'],
+                redirect_uri=secrets['SPOTIFY_REDIRECT_URI'],
                 scope=spotipy_scope,
                 open_browser=False,
                 cache_handler=cache_handler
@@ -326,4 +328,4 @@ async def monitor_connection():
 
 
 # Start Discord bot
-discord_client.run(secrets['discord']['token'])
+discord_client.run(secrets['DISCORD_TOKEN'])
