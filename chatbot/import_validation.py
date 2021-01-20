@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
 
-def validate_secrets(secrets_folder_path):
+def validate_secrets():
     secrets = {}
 
     # Environment variables
@@ -58,18 +58,16 @@ def validate_secrets(secrets_folder_path):
         "MONGO_INITDB_ROOT_PASSWORD is not a string"
         
     # RSA keys
-    with open(os.path.join(secrets_folder_path, "private_key.pem"), "rb") as key_file:
-        secrets['private_key'] = serialization.load_pem_private_key(
-            key_file.read(),
-            password=None,
-            backend=default_backend()
-        )
+    secrets['RSA_PRIVATE_KEY'] = serialization.load_pem_private_key(
+        os.environb[b"RSA_PRIVATE_KEY"],
+        password=None,
+        backend=default_backend()
+    )
 
-    with open(os.path.join(secrets_folder_path, "public_key.pem"), "rb") as key_file:
-        secrets['public_key'] = serialization.load_pem_public_key(
-            key_file.read(),
-            backend=default_backend()
-        )
+    secrets['RSA_PUBLIC_KEY'] = serialization.load_pem_public_key(
+        os.environb[b"RSA_PUBLIC_KEY"],
+        backend=default_backend()
+    )
 
     return secrets
 
