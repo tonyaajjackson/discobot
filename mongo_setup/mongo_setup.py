@@ -1,6 +1,6 @@
 # OS/sys
 import sys
-from os import path
+import os
 import argparse
 import json
 
@@ -9,14 +9,14 @@ from pymongo import MongoClient
 from pprint import pprint
 
 # Discobot
-from import_validation import validate_config, validate_guilds, validate_secrets
+from import_validation import validate_config, validate_guilds
 
 # Get config folder location from command line option
 parser = argparse.ArgumentParser(
     usage="%(prog)s [OPTION] [VALUE]"
 )
 parser.add_argument(
-    "--path", help="Path to the folder containing config.json, guilds,json, secrets.json",
+    "--path", help="Path to the folder containing config.json, guilds,json",
     action="store"
 )
 
@@ -25,40 +25,40 @@ args = parser.parse_args()
 if not args.path is None:
     config_folder = args.path
 else:
-    config_folder = "./config/"
+    config_folder = "./mongo_setup/config/"
 
-if not path.exists(config_folder):
+if not os.path.exists(config_folder):
     print("Invalid path: " + config_folder)
     sys.exit()
 
 # Load files
-config_path = path.join(config_folder, "config.json")
-guilds_path = path.join(config_folder, "guilds.json")
-users_path = path.join(config_folder, "users.json")
+config_path = os.path.join(config_folder, "config.json")
+guilds_path = os.path.join(config_folder, "guilds.json")
+users_path = os.path.join(config_folder, "users.json")
 
 config = validate_config(config_path)
 guilds = validate_guilds(guilds_path)
-secrets = validate_secrets(config_folder)
 # Skip import validation for users as loading from JSON is a temporary measure
 with open(users_path) as f:
         users = json.load(f)
 
 client = MongoClient(
-    host=secrets['mongodb']['uri'],
-    username=secrets['mongodb']['username'],
-    password=secrets['mongodb']['password']
+    host=os.environ["MONGO_HOSTNAME"],
+    port=int(os.environ["MONGO_PORT"]),
+    username=os.environ["MONGO_INITDB_ROOT_USERNAME"],
+    password=os.environ["MONGO_INITDB_ROOT_PASSWORD"]
 )
 
 if 'discobot' in client.list_database_names():
     response = input(
-        "Database at " + str(secrets['mongodb']['uri']) +
+        "Database at " + os.environ["MONGO_HOSTNAME"] +
         " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
     )
 
     if response.lower() != 'y':
         sys.exit()
 
-    if "prod" in secrets['mongodb']['uri']:
+    if "prod" in os.environ["MONGO_HOSTNAME"]:
         response = input(
             "You're attempting to overwrite the prod database!\n" +
             "There is no way to recover this data after deletion\n" +
