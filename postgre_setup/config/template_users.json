@@ -1,0 +1,12 @@
+[
+    {
+        "username": "",
+        "spotify_auth_token": null,
+        "encrypted_fernet_key": null
+    },
+    {
+        "username": "",
+        "spotify_auth_token": null,
+        "encrypted_fernet_key": null
+    }
+]

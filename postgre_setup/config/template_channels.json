@@ -1,0 +1,16 @@
+[
+    {
+        "channel_id": 0,
+        "monitor": false,
+        "notify": false,
+        "test": false,
+        "fk_guild_id": 0
+    },
+    {
+        "channel_id": 0,
+        "monitor": false,
+        "notify": false,
+        "test": false,
+        "fk_guild_id": 0
+    }
+]
