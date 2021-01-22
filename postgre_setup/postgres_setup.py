@@ -2,9 +2,7 @@ import argparse
 import json
 import os
 
-import sqlalchemy as sq
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+import peewee as pw
 
 
 # CLI Arg parsing
@@ -21,94 +19,79 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-# SQLAlchemy Classes
-Base = declarative_base()
-class Config(Base):
-    __tablename__ = "config"
+# Peewee PostgreSQL connection setup
+db = pw.PostgresqlDatabase(os.environ["POSTGRES_DB"],
+    user=os.environ["POSTGRES_USER"],
+    password=os.environ["POSTGRES_PASSWORD"],
+    host=os.environ["POSTGRES_HOSTNAME"],
+    port=os.environ["POSTGRES_PORT"]
+)
 
-    id = sq.Column(sq.Integer, primary_key=True)
-    playlist_update_cron_expr = sq.Column(sq.String)
-    testing_cron_expr = sq.Column(sq.String)
 
-class User(Base):
-    __tablename__ = "users"
+# Models
+class Config(pw.Model):
+    id = pw.AutoField()
+    playlist_update_cron_expr = pw.CharField()
+    testing_cron_expr = pw.CharField()
 
-    id = sq.Column(sq.BigInteger, primary_key=True)
-    username = sq.Column(sq.String)
-    spotify_auth_token = sq.Column(sq.LargeBinary)
-    encrypted_fernet_key = sq.Column(sq.LargeBinary)
+    class Meta:
+        database = db
 
-    guilds = relationship("Guild", back_populates="user", cascade="all")
-
-    def __repr__(self):
-        return str(self.id) + ": " + self.username
-
-class Guild(Base):
-    __tablename__ = "guilds"
-
-    id = sq.Column(sq.BigInteger, primary_key=True)
-    all_time_playlist_uri = sq.Column(sq.String)
-    recent_playlist_uri = sq.Column(sq.String)
-    buffer_playlist_uri = sq.Column(sq.String)
+class User(pw.Model):
+    id = pw.AutoField()
+    # id will need to become pw.BigIntegerField(primary_key=True) when Discord user_id is implemented
+    username = pw.CharField()
+    spotify_auth_token = pw.BlobField(null=True )
+    encrypted_fernet_key = pw.BlobField(null=True)
     
-    user_id = sq.Column(sq.BigInteger, sq.ForeignKey('users.id'))
-    user = relationship("User", back_populates="guilds", cascade="all")
+    class Meta:
+        database = db
 
-    channels = relationship("Channel", back_populates="guild", cascade="all")
+class Guild(pw.Model):
+    id = pw.BigIntegerField(primary_key=True)
+    all_time_playlist_uri = pw.CharField()
+    recent_playlist_uri = pw.CharField()
+    buffer_playlist_uri = pw.CharField()
+    
+    user_id = pw.ForeignKeyField(User, backref="guilds")
 
-    def __repr__(self):
-        return "Discord Guild ID: " + str(self.guild_id)
+    class Meta:
+        database = db
 
+class Channel(pw.Model):
+    id = pw.BigIntegerField(primary_key=True)
+    monitor = pw.BooleanField()
+    notify = pw.BooleanField()
+    test = pw.BooleanField()
 
-class Channel(Base):
-    __tablename__ = "channels"
+    guild_id = pw.ForeignKeyField(Guild, backref="channels")
 
-    id = sq.Column(sq.BigInteger, primary_key=True)
-    monitor = sq.Column(sq.Boolean)
-    notify = sq.Column(sq.Boolean)
-    test = sq.Column(sq.Boolean)
-
-    guild_id = sq.Column(sq.BigInteger, sq.ForeignKey("guilds.id"))
-    guild = relationship("Guild", back_populates="channels", cascade="all")
-
+    class Meta:
+        database = db
 
 
 # Data for insertion into SQL database
 tables = [
-    'config',
-    'users',
-    'guilds',
-    'channels'
+        Config,
+        User,
+        Guild,
+        Channel
 ]
 
 data = {}
 for table in tables:
-    with open(os.path.join(args.path, table + ".json")) as f:
-        data[table] = json.loads(f.read())
+    table_name = table.__name__.lower()
+    with open(os.path.join(args.path, table_name + ".json")) as f:
+        data[table_name] = json.loads(f.read())
 
 
-# PostgreSQL connection
-db_string = "postgresql://" + \
-            os.environ["POSTGRES_USER"] + \
-            ":" + \
-            os.environ["POSTGRES_PASSWORD"] + \
-            "@" + \
-            os.environ["POSTGRES_HOSTNAME"] + \
-            ":" + \
-            os.environ["POSTGRES_PORT"] + \
-            "/" + \
-            os.environ["POSTGRES_DB"]
-
-engine = sq.create_engine(db_string)
-
-
-# Wipe old data
-if engine.table_names():
+# # Wipe old data
+db.connect()
+if db.get_tables():
     response = input(
-        "Database at " + db_string +
+        "Database at " + os.environ["POSTGRES_HOSTNAME"] +
         " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
     )
-
     if response.lower() != 'y':
         sys.exit()
 
@@ -121,23 +104,46 @@ if engine.table_names():
         if response.lower() != "overwrite-prod":
             sys.exit()
     
-    Base.metadata.drop_all(engine)
+    db.drop_tables(tables)
+    
 
 # Load new data
-Base.metadata.create_all(engine)
+db.create_tables(tables)
+Config(**data['config']).save()
 
-session = sessionmaker(bind=engine)()
-session.add(Config(**data['config']))
-session.commit()
+for user in data['user']:
+    User(**user).save()
 
-for user in data['users']:
-    session.add(User(**user))
-    session.commit()
+for guild in data['guild']:
+    Guild(**guild).save(force_insert=True)
+    # Force insert as primary key is coming from json and not autogenerated
+    # http://docs.peewee-orm.com/en/latest/peewee/models.html#id4
 
-for guild in data['guilds']:
-    session.add(Guild(**guild))
-    session.commit()
+for channel in data['channel']:
+    Channel(**channel).save(force_insert=True)
 
-for channel in data['channels']:
-    session.add(Channel(**channel))
-    session.commit()
+
+# Verify data loaded correctly
+config_db = [ config for config in Config.select().dicts() ][0]
+for key in data['config']:
+    assert config_db[key] == data['config'][key]
+
+tables_db = [
+    User,
+    Guild,
+    Channel
+]
+
+# User, Guild, and Channels can all be checked together as they're all
+# lists of dictionaries
+db_test = {}
+for table in tables_db:
+    table_name = table.__name__.lower()
+    db_test[table_name] = [ val for val in table.select().dicts() ]
+
+    for (index, item) in enumerate(data[table_name]):
+        for key in item:
+            # Compare everything as a string. Type checking is enforced
+            # by peewee's types so the only check is that the data
+            # arrived at the database
+            assert str(db_test[table_name][index][key]) == str(item[key])

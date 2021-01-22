@@ -143,9 +143,9 @@ cython_debug/
 
 # Chatbot files
 config*.json
-channels*.json
-guilds*.json
-users*.json
+channel*.json
+guild*.json
+user*.json
 *.pem
 
 # Misc
