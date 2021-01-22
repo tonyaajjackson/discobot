@@ -27,8 +27,8 @@ def validate_secrets():
         
         secrets['MONGO_PORT'] = int(secrets['MONGO_PORT'])
 
-    except KeyError(e):
-        raise type(e)("Environment is missing variable " + var)
+    except KeyError:
+        raise KeyError("Environment is missing variable " + var)
 
     assert type(secrets['DISCORD_TOKEN']) == str, \
         "DISCORD_TOKEN is not a string"

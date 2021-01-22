@@ -12,8 +12,7 @@ FROM base AS runtime
 WORKDIR /chatbot
 COPY --from=python-deps /.venv/ .venv/
 ENV PATH="/chatbot/.venv/bin:$PATH"
-COPY import_validation.py .
-COPY spotify_custom.py .
-COPY chatbot.py .
+COPY ./chatbot ./chatbot
+COPY ./tests ./tests
 
-ENTRYPOINT ["python", "-u", "chatbot.py"]
+ENTRYPOINT ["python", "-u", "./chatbot/chatbot.py"]
