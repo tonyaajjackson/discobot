@@ -1,0 +1,7 @@
+FROM arm32v6/python:3.8-alpine AS base
+# You may need to adjust architecture of Python container
+# above for your Raspberry Pi model. Above arch works for 
+# Raspberry Pi Model B+ V1.2
+RUN apk --no-cache add gcc musl-dev
+
+# Regular dockerfile goes here
