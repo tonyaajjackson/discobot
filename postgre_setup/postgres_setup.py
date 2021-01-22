@@ -38,7 +38,7 @@ class User(Base):
     spotify_auth_token = sq.Column(sq.LargeBinary)
     encrypted_fernet_key = sq.Column(sq.LargeBinary)
 
-    guilds = relationship("Guild", back_populates="user")
+    guilds = relationship("Guild", back_populates="user", cascade="all")
 
     def __repr__(self):
         return str(self.id) + ": " + self.username
@@ -52,9 +52,9 @@ class Guild(Base):
     buffer_playlist_uri = sq.Column(sq.String)
     
     user_id = sq.Column(sq.BigInteger, sq.ForeignKey('users.id'))
-    user = relationship("User", back_populates="guilds")
+    user = relationship("User", back_populates="guilds", cascade="all")
 
-    channels = relationship("Channel", back_populates="guild")
+    channels = relationship("Channel", back_populates="guild", cascade="all")
 
     def __repr__(self):
         return "Discord Guild ID: " + str(self.guild_id)
@@ -69,7 +69,7 @@ class Channel(Base):
     test = sq.Column(sq.Boolean)
 
     guild_id = sq.Column(sq.BigInteger, sq.ForeignKey("guilds.id"))
-    guild = relationship("Guild", back_populates="channels")
+    guild = relationship("Guild", back_populates="channels", cascade="all")
 
 
 
