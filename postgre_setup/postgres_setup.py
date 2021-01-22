@@ -33,7 +33,7 @@ class Config(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id = sq.Column(sq.Integer, primary_key=True)
+    id = sq.Column(sq.BigInteger, primary_key=True)
     username = sq.Column(sq.String)
     spotify_auth_token = sq.Column(sq.LargeBinary)
     encrypted_fernet_key = sq.Column(sq.LargeBinary)
@@ -46,13 +46,12 @@ class User(Base):
 class Guild(Base):
     __tablename__ = "guilds"
 
-    id = sq.Column(sq.Integer, primary_key=True)
-    guild_id = sq.Column(sq.BigInteger)
+    id = sq.Column(sq.BigInteger, primary_key=True)
     all_time_playlist_uri = sq.Column(sq.String)
     recent_playlist_uri = sq.Column(sq.String)
     buffer_playlist_uri = sq.Column(sq.String)
     
-    user_id = sq.Column(sq.Integer, sq.ForeignKey('users.id'))
+    user_id = sq.Column(sq.BigInteger, sq.ForeignKey('users.id'))
     user = relationship("User", back_populates="guilds")
 
     channels = relationship("Channel", back_populates="guild")
@@ -64,13 +63,12 @@ class Guild(Base):
 class Channel(Base):
     __tablename__ = "channels"
 
-    id = sq.Column(sq.Integer, primary_key=True)
-    channel_id = sq.Column(sq.BigInteger)
+    id = sq.Column(sq.BigInteger, primary_key=True)
     monitor = sq.Column(sq.Boolean)
     notify = sq.Column(sq.Boolean)
     test = sq.Column(sq.Boolean)
 
-    guild_id = sq.Column(sq.Integer, sq.ForeignKey("guilds.id"))
+    guild_id = sq.Column(sq.BigInteger, sq.ForeignKey("guilds.id"))
     guild = relationship("Guild", back_populates="channels")
 
 
@@ -136,12 +134,10 @@ for user in data['users']:
     session.add(User(**user))
     session.commit()
 
-for (i, guild) in enumerate(data['guilds']):
-    user = session.query(User).filter_by(username=guild['fk_username']).one()
-    user.guilds.append(Guild(**{key:val for key, val in guild.items() if 'fk_' not in key}))
+for guild in data['guilds']:
+    session.add(Guild(**guild))
     session.commit()
 
-for (i, channel) in enumerate(data['channels']):
-    guild = session.query(Guild).filter_by(guild_id=channel['fk_guild_id']).one()
-    guild.channels.append(Channel(**{key:val for key, val in channel.items() if 'fk_' not in key}))
+for channel in data['channels']:
+    session.add(Channel(**channel))
     session.commit()

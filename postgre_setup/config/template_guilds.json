@@ -1,16 +1,16 @@
 [
     {
-        "guild_id": 0,
+        "id": 0,
         "all_time_playlist_uri": "",
         "recent_playlist_uri": "",
         "buffer_playlist_uri": "",
-        "fk_username": ""
+        "user_id": ""
     },
     {
-        "guild_id": 0,
+        "id": 0,
         "all_time_playlist_uri": "",
         "recent_playlist_uri": "",
         "buffer_playlist_uri": "",
-        "fk_username": ""
+        "user_id": ""
     }
 ]
