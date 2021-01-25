@@ -53,7 +53,7 @@ class Guild(pw.Model):
     recent_playlist_uri = pw.CharField()
     buffer_playlist_uri = pw.CharField()
     
-    user = pw.ForeignKeyField(User, backref="guilds")
+    user_id = pw.ForeignKeyField(User, backref="guilds")
 
     class Meta:
         database = db
@@ -64,7 +64,7 @@ class Channel(pw.Model):
     notify = pw.BooleanField()
     test = pw.BooleanField()
 
-    guild = pw.ForeignKeyField(Guild, backref="channels")
+    guild_id = pw.ForeignKeyField(Guild, backref="channels")
 
     class Meta:
         database = db
