@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Config, Channel, Guild, User
+
+admin.site.register(Config)
+admin.site.register(Channel)
+admin.site.register(Guild)
+admin.site.register(User)
