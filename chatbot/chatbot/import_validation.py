@@ -16,19 +16,30 @@ def validate_secrets():
             "SPOTIFY_CLIENT_ID",
             "SPOTIFY_CLIENT_SECRET",
             "SPOTIFY_REDIRECT_URI",
-            "MONGO_HOSTNAME",
-            "MONGO_PORT",
-            "MONGO_INITDB_ROOT_USERNAME",
-            "MONGO_INITDB_ROOT_PASSWORD"
+            "POSTGRES_HOSTNAME",
+            "POSTGRES_PORT",
+            "POSTGRES_USER",
+            "POSTGRES_PASSWORD",
+            "POSTGRES_DB"
         ]
 
         for var in environment_variables:
             secrets[var] = os.environ[var]
-        
-        secrets['MONGO_PORT'] = int(secrets['MONGO_PORT'])
 
     except KeyError:
         raise KeyError("Environment is missing variable " + var)
+
+    # Make Postgre connection string
+    secrets['db_string'] = "postgresql://" + \
+        os.environ["POSTGRES_USER"] + \
+        ":" + \
+        os.environ["POSTGRES_PASSWORD"] + \
+        "@" + \
+        os.environ["POSTGRES_HOSTNAME"] + \
+        ":" + \
+        os.environ["POSTGRES_PORT"] + \
+        "/" + \
+        os.environ["POSTGRES_DB"]
 
     assert type(secrets['DISCORD_TOKEN']) == str, \
         "DISCORD_TOKEN is not a string"
@@ -44,18 +55,6 @@ def validate_secrets():
 
     assert validators.url(secrets['SPOTIFY_REDIRECT_URI']), \
         "SPOTIFY_REDIRECT_URI is not a valid URL"
-
-    assert type(secrets['MONGO_HOSTNAME']) == str, \
-        "MONGO_HOSTNAME is not a string"
-
-    assert type(secrets['MONGO_PORT']) == int, \
-        "MONGO_PORT is not an integer"
-    
-    assert type(secrets['MONGO_INITDB_ROOT_USERNAME']) == str, \
-        "MONGO_INITDB_ROOT_USERNAME is not a string"
-    
-    assert type(secrets['MONGO_INITDB_ROOT_PASSWORD']) == str, \
-        "MONGO_INITDB_ROOT_PASSWORD is not a string"
         
     # RSA keys
     secrets['RSA_PRIVATE_KEY'] = serialization.load_pem_private_key(
