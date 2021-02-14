@@ -19,9 +19,11 @@ import cron_descriptor
 from datetime import datetime
 
 from import_validation import validate_secrets
-from spotify_custom import MongoCacheHandler, SpotifyCustom
+from spotify_custom import PostgreCacheHandler, SpotifyCustom
 
-import pymongo
+import psycopg2
+import peewee as pw
+from models import Channel, Config, Guild, User, db
 
 # Environment Setup
 logging.basicConfig(
@@ -32,33 +34,30 @@ logging.basicConfig(
 # Set up secrets
 secrets = validate_secrets()
 
-# Set up MongoDB connection
-logging.info("Trying to connect to mongodb at: " + secrets['MONGO_HOSTNAME'] +
-    " on port " + str(secrets['MONGO_PORT']))
-client = pymongo.MongoClient(
-    host=secrets['MONGO_HOSTNAME'],
-    port=secrets['MONGO_PORT'],
-    username=secrets['MONGO_INITDB_ROOT_USERNAME'],
-    password=secrets['MONGO_INITDB_ROOT_PASSWORD']
+# Set up database connection
+logging.info("Trying to connect to " + secrets['db_string'])
+db.init(
+    database=os.environ["POSTGRES_DB"],
+    user=os.environ["POSTGRES_USER"],
+    password=os.environ["POSTGRES_PASSWORD"],
+    host=os.environ["POSTGRES_HOSTNAME"],
+    port=os.environ["POSTGRES_PORT"]
 )
 
 try:
-    client.server_info()
-except pymongo.errors.ServerSelectionTimeoutError:
-    logging.fatal("Could not connect to mongodb.", exc_info=True)
+    db.get_tables()
+except psycopg2.OperationalError:
+    logging.fatal("Could not connect to database", exc_info=True)
     sys.exit()
 
-logging.info("Successfully connected to mongodb.")
-config = client.discobot.config
-guilds = client.discobot.guilds
-
+logging.info("Successfully connected to database.")
 
 # Print cron configuration to debug
 logging.info("Current datetime is: " + str(datetime.now()))
-logging.info("Playlist update is scheduled to run: " + cron_descriptor.get_description(config.find_one()["playlist_update_cron_expr"]))
-logging.info("Next playlist update scheduled for: " + str(croniter(config.find_one()["playlist_update_cron_expr"]).get_next(datetime)))
-logging.info("Monitoring test is scheduled to run: " + cron_descriptor.get_description(config.find_one()["testing_cron_expr"]))
-logging.info("Next playlist update scheduled for: " + str(croniter(config.find_one()["testing_cron_expr"]).get_next(datetime)))
+logging.info("Playlist update is scheduled to run: " + cron_descriptor.get_description(Config.get().playlist_update_cron_expr))
+logging.info("Next playlist update scheduled for: " + str(croniter(Config.get().playlist_update_cron_expr).get_next(datetime)))
+logging.info("Monitoring test is scheduled to run: " + cron_descriptor.get_description(Config.get().testing_cron_expr))
+logging.info("Next playlist update scheduled for: " + str(croniter(Config.get().testing_cron_expr).get_next(datetime)))
 
 spotipy_scope = (
     'playlist-modify-public' + ' ' +
@@ -74,12 +73,17 @@ spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([A-Za-
 async def on_ready():
     logging.info(f'{discord_client.user} is connected')
 
-    # Get a testing guild for testing the connection to Spotify
-    testing_guild = guilds.find_one({"is_connection_testing_guild": True})
+    # Find the test user that owns a guild with a testing channel
+    test_user = (User
+        .select(User)
+        .join(Guild, pw.JOIN.LEFT_OUTER)
+        .join(Channel, pw.JOIN.LEFT_OUTER)
+        .where(Channel.test == True)
+        .execute()
+    )[0]
 
-    cache_handler = MongoCacheHandler(
-        client=client,
-        username=testing_guild['username'],
+    cache_handler = PostgreCacheHandler(
+        user=test_user,
         private_key=secrets['RSA_PRIVATE_KEY'],
         public_key=secrets['RSA_PUBLIC_KEY']
     )
@@ -110,18 +114,17 @@ async def on_ready():
 @discord_client.event
 async def on_message(message):
     try:
-        guild_info = guilds.find_one({"guild_id": message.guild.id})
-        # guild_info = [guild for guild in config.find_one()["guilds"] if guild._id == message.guild.id][0]
-    except IndexError:
+        guild = Guild.get(Guild.id == message.guild.id)
+    except Guild.DoesNotExist:
         logging.error("Received message from guild_id: " + str(message.guild.id) + " but no corresponding guild was found in guilds. Ignoring message.")
         return
 
     if message.author == discord_client.user and message.content[0:6] != "!debug": return
-    if message.channel.id not in guild_info['monitoring_channel_ids']: return
+    monitoring_channel_ids = [channel.id for channel in guild.channels.select(Channel.id).where(Channel.monitor == True)]
+    if message.channel.id not in monitoring_channel_ids: return
 
-    cache_handler = MongoCacheHandler(
-        client=client,
-        username=guild_info['username'],
+    cache_handler = PostgreCacheHandler(
+        user=guild.user,
         private_key=secrets['RSA_PRIVATE_KEY'],
         public_key=secrets['RSA_PUBLIC_KEY']
     )
@@ -143,8 +146,8 @@ async def on_message(message):
             link_id = link[1]
 
             if link_type == "track":
-                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], [link_id])
-                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], [link_id])
+                sp.add_if_unique_tracks(guild.all_time_playlist_uri, [link_id])
+                sp.add_if_unique_tracks(guild.buffer_playlist_uri, [link_id])
 
             if link_type == "album":
                 try:
@@ -153,8 +156,8 @@ async def on_message(message):
                     logging.exception("Error in getting album tracks", exc_info=True)
                     break
 
-                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], album_track_ids)
-                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], album_track_ids)
+                sp.add_if_unique_tracks(guild.all_time_playlist_uri, album_track_ids)
+                sp.add_if_unique_tracks(guild.buffer_playlist_uri, album_track_ids)
 
             if link_type == "artist":
                 try:
@@ -163,18 +166,17 @@ async def on_message(message):
                     logging.exception("Error in getting artist tracks", exc_info=True)
                     break
 
-                sp.add_if_unique_tracks(guild_info['all_time_playlist_uri'], top_song_ids)
-                sp.add_if_unique_tracks(guild_info['buffer_playlist_uri'], top_song_ids)
+                sp.add_if_unique_tracks(guild.all_time_playlist_uri, top_song_ids)
+                sp.add_if_unique_tracks(guild.buffer_playlist_uri, top_song_ids)
 
 
-@aiocron.crontab(config.find_one()["playlist_update_cron_expr"])
+@aiocron.crontab(Config.get().playlist_update_cron_expr)
 async def load_recent_playlist():
-    for guild_info in guilds.find():
-        logging.info("Updating guild with id: " + str(guild_info["guild_id"]))
-        logging.info("Attempting to get Spotify Auth token for user: " + guild_info["username"])
-        cache_handler = MongoCacheHandler(
-            client=client,
-            username=guild_info['username'],
+    for guild in Guild.select():
+        logging.info("Updating guild with id: " + str(guild.id))
+        logging.info("Attempting to get Spotify Auth token for user: " + str(guild.user.id))
+        cache_handler = PostgreCacheHandler(
+            user = guild.user,
             private_key=secrets['RSA_PRIVATE_KEY'],
             public_key=secrets['RSA_PUBLIC_KEY']
         )
@@ -190,35 +192,38 @@ async def load_recent_playlist():
             )
         )
         
-        sp.wipe_playlist(guild_info['recent_playlist_uri'])
+        sp.wipe_playlist(guild.recent_playlist_uri)
         sp.copy_all_playlist_tracks(
-            guild_info['buffer_playlist_uri'],
-            guild_info['recent_playlist_uri']
+            guild.buffer_playlist_uri,
+            guild.recent_playlist_uri
         )
-        sp.wipe_playlist(guild_info['buffer_playlist_uri'])
+        sp.wipe_playlist(guild.buffer_playlist_uri)
 
-        if not (channel := discord_client.get_channel(guild_info['notify_channel_id'])):
-            logging.error("Cannot find Discord channel with id: " + 
-                str(guild_info['notify_channel_id']) +
-                " - check that discord bot has been added to server."
-                " Follow Discord OAuth process described in readme to add bot to server.")
-            break
+        notify_channel_ids = [channel.id for channel in guild.channels.select(Channel.id).where(Channel.notify == True)]
 
-        # Message chat
-        await channel.send("Check out all the songs shared recently!\n" +
-            "https://open.spotify.com/playlist/" + 
-            guild_info['recent_playlist_uri'][len("spotify:playlist:"):]
-        )
-        
-        await channel.send("You can also find all songs ever shared here:\n" + 
-            "https://open.spotify.com/playlist/" + 
-            guild_info['all_time_playlist_uri'][len("spotify:playlist:"):]
-        )
+        for notify_channel_id in notify_channel_ids:
+            if not (channel := discord_client.get_channel(notify_channel_id)):
+                logging.error("Cannot find Discord channel with id: " + 
+                    str(notify_channel_id) +
+                    " - check that discord bot has been added to server."
+                    " Follow Discord OAuth process described in readme to add bot to server.")
+                break
+
+            # Message chat
+            await channel.send("Check out all the songs shared recently!\n" +
+                "https://open.spotify.com/playlist/" + 
+                guild.recent_playlist_uri[len("spotify:playlist:"):]
+            )
+            
+            await channel.send("You can also find all songs ever shared here:\n" + 
+                "https://open.spotify.com/playlist/" + 
+                guild.all_time_playlist_uri[len("spotify:playlist:"):]
+            )
 
 
-@aiocron.crontab(config.find_one()["testing_cron_expr"])
+@aiocron.crontab(Config.get().testing_cron_expr)
 async def monitor_connection():
-    debug_guilds = guilds.find({"is_connection_testing_guild": True})
+    debug_guilds = Guild.select().join(Channel).where(Channel.test == True)
 
     test_links = {
         "track" :   "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
@@ -226,13 +231,12 @@ async def monitor_connection():
         "artist":   "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
     }
 
-    for guild_info in debug_guilds:
-        logging.info("Beginning connection test of guild: " + str(guild_info['guild_id']))
+    for guild in debug_guilds:
+        logging.info("Beginning connection test of guild: " + str(guild.id))
 
-        logging.info("Attempting to get Spotify Auth token for user: " + guild_info["username"])
-        cache_handler = MongoCacheHandler(
-            client=client,
-            username=guild_info['username'],
+        logging.info("Attempting to get Spotify Auth token for user: " + str(guild.user.id))
+        cache_handler = PostgreCacheHandler(
+            user=guild.user,
             private_key=secrets['RSA_PRIVATE_KEY'],
             public_key=secrets['RSA_PUBLIC_KEY']
         )
@@ -248,17 +252,17 @@ async def monitor_connection():
             )
         )
         for (link_type, test_link) in test_links.items():
-            sp.wipe_playlist(guild_info['all_time_playlist_uri'])
-            sp.wipe_playlist(guild_info['recent_playlist_uri'])
-            sp.wipe_playlist(guild_info['buffer_playlist_uri'])
+            sp.wipe_playlist(guild.all_time_playlist_uri)
+            sp.wipe_playlist(guild.recent_playlist_uri)
+            sp.wipe_playlist(guild.buffer_playlist_uri)
 
             await asyncio.sleep(5)
 
             # Confirm successful all-time playlist wipe
             try:
-                if playlist_tracks := sp.playlist_tracks(guild_info['all_time_playlist_uri'])['items']:
+                if playlist_tracks := sp.playlist_tracks(guild.all_time_playlist_uri)['items']:
                     logging.error("Failed to clear playlist id: " + 
-                        guild_info['all_time_playlist_uri'] +
+                        guild.all_time_playlist_uri +
                         ". The following songs remain on the playlist:\n" +
                         str(playlist_tracks)
                     )
@@ -266,14 +270,21 @@ async def monitor_connection():
 
             except spotipy.SpotifyException:
                 logging.error("Exception raised when attempting to clear playlist id: "+
-                    guild_info['all_time_playlist_uri'],
+                    guild.all_time_playlist_uri,
                     exc_info=True
                 )
                 continue
             
-            if not (channel := discord_client.get_channel(guild_info['testing_channel_id'])):
+            channel = discord_client.get_channel(
+                Channel.select(Channel.id).where(
+                    (Channel.test == True) &
+                    (Channel.guild == guild)
+                )[0].id
+            )
+
+            if not channel:
                 logging.error("Cannot find Discord channel with id: " + 
-                    str(guild_info['testing_channel_id']) +
+                    str(channel.id) +
                     " - check that discord bot has been added to server."
                     " Follow Discord OAuth process described in readme to add bot to server.")
                 continue
@@ -285,9 +296,9 @@ async def monitor_connection():
 
             # Confirm songs were successfully added
             try:
-                if not(playlist_tracks := sp.playlist_tracks(guild_info['all_time_playlist_uri'])['items']):
+                if not(playlist_tracks := sp.playlist_tracks(guild.all_time_playlist_uri)['items']):
                     logging.error("Failed to add songs from uri: " +
-                        guild_info['all_time_playlist_uri'] +
+                        guild.all_time_playlist_uri +
                         ". Playlist appears empty"
                     )
                     continue
@@ -322,7 +333,7 @@ async def monitor_connection():
                 logging.error("Exception raised when attempting to add uri: " +
                     test_link +
                     " to playlist id: " +
-                    guild_info['all_time_playlist_uri'],
+                    guild.all_time_playlist_uri,
                     exc_info=True
                 )
 

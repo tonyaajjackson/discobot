@@ -10,49 +10,45 @@ services:
       - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
       - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
       - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI}
-      - MONGO_HOSTNAME=${MONGO_HOSTNAME}
-      - MONGO_PORT=${MONGO_PORT}
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - POSTGRES_HOSTNAME=${POSTGRES_HOSTNAME}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - RSA_PRIVATE_KEY=${RSA_PRIVATE_KEY}
       - RSA_PUBLIC_KEY=${RSA_PUBLIC_KEY}
     restart: unless-stopped
     networks:
       - discobot
     depends_on:
-      - mongodb
+      - postgredb
     # Allows completing spotify OAuth process via terminal:
     stdin_open: true
     tty: true
+    command: sh -c "/wait-for ${POSTGRES_HOSTNAME}:${POSTGRES_PORT} && python -u ./chatbot/chatbot.py"
 
-  mongodb:
-    container_name: ${MONGO_HOSTNAME}
-    image: mongo
+  postgredb:
+    image: postgres
+    hostname: ${POSTGRES_HOSTNAME}
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - ./debug_volumes/mongo-debug:/data/db # Change this for production
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - ./debug_volumes/postgre_db/:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     networks:
       - discobot
-    # Remove port forwarding below for production. This port forward exposes
-    # the mongodb at localhost:27017, which allows interactive manipulation
-    # of data in the database from the host computer.
-    ports:
-      - 27017:27017
 
-  # Disable Mongo-Express for production use
-  mongo-express:
-    image: mongo-express
+  # Disable adminer for production
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
     networks:
       - discobot
-    ports:
-      - 8082:8081
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=${MONGO_HOSTNAME}
-      - ME_CONFIG_MONGODB_PORT=${MONGO_PORT}
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
 
   # ==== BACKEND ====
   web:

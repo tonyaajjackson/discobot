@@ -13,9 +13,10 @@ aiocron = "*"
 validators = "*"
 cron-descriptor = "*"
 croniter = "*"
-pymongo = "*"
 spotipy = {git = "https://github.com/plamere/spotipy.git"}
 cryptography = "*"
+psycopg2 = "*"
+peewee = "*"
 
 [requires]
 python_version = "3.8"

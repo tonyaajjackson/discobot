@@ -9,6 +9,9 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
+from models import Channel, Config, Guild, User, db
+
+
 class SpotifyCustom(spotipy.Spotify):
     def add_if_unique_tracks(self, playlist_uri, track_ids):
         assert type(playlist_uri) == str
@@ -55,26 +58,23 @@ class SpotifyCustom(spotipy.Spotify):
             return
 
 
-class MongoCacheHandler(CacheHandler):
+class PostgreCacheHandler(CacheHandler):
     def __init__(self,
-                 client,
-                 username,
+                 user,
                  private_key,
                  public_key):
-        self.username = username
-        self.client = client
+        self.user = user
         self.private_key = private_key
         self.public_key = public_key
 
     def get_cached_token(self):
-        user = self.client.discobot.users.find_one({"username": self.username})
-        encrypted_token = user['spotify_auth_token']
-
-        if encrypted_token is None:
+        if self.user.spotify_auth_token is None:
             # No cached token
             return None
+        
+        encrypted_token = self.user.spotify_auth_token.tobytes()
                 
-        encrypted_fernet_key = user['encrypted_fernet_key']
+        encrypted_fernet_key = self.user.encrypted_fernet_key.tobytes()
 
         # Decrypt Fernet key using RSA private key
         fernet_key = self.private_key.decrypt(
@@ -118,18 +118,9 @@ class MongoCacheHandler(CacheHandler):
             )
         )
         
-        # Push to MongoDB
-        self.client.discobot.users.update_one(
-            {
-                "username": self.username
-            },
-            {
-                "$set": 
-                    {
-                        "spotify_auth_token": encrypted_token,
-                        "encrypted_fernet_key": encrypted_fernet_key
-                    }
-            }
-        )
+        # Push to database
+        self.user.spotify_auth_token = encrypted_token
+        self.user.encrypted_fernet_key = encrypted_fernet_key
+        self.user.save()
 
         return None

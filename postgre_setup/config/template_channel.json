@@ -1,0 +1,16 @@
+[
+    {
+        "id": 0,
+        "monitor": false,
+        "notify": false,
+        "test": false,
+        "guild_id": 0
+    },
+    {
+        "id": 0,
+        "monitor": false,
+        "notify": false,
+        "test": false,
+        "guild_id": 0
+    }
+]
