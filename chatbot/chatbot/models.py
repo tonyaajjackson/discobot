@@ -10,6 +10,7 @@ class Config(pw.Model):
 
     class Meta:
         database = db
+        table_name = "discobot_config"
 
 class User(pw.Model):
     id = pw.AutoField()
@@ -20,6 +21,7 @@ class User(pw.Model):
     
     class Meta:
         database = db
+        table_name = "discobot_user"
 
 class Guild(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
@@ -31,6 +33,7 @@ class Guild(pw.Model):
 
     class Meta:
         database = db
+        table_name = "discobot_guild"
 
 class Channel(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
@@ -42,3 +45,4 @@ class Channel(pw.Model):
 
     class Meta:
         database = db
+        table_name = "discobot_channel"

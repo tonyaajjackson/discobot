@@ -36,6 +36,7 @@ class Config(pw.Model):
 
     class Meta:
         database = db
+        table_name = "discobot_config"
 
 class User(pw.Model):
     id = pw.AutoField()
@@ -46,6 +47,7 @@ class User(pw.Model):
     
     class Meta:
         database = db
+        table_name = "discobot_user"
 
 class Guild(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
@@ -53,10 +55,11 @@ class Guild(pw.Model):
     recent_playlist_uri = pw.CharField()
     buffer_playlist_uri = pw.CharField()
     
-    user_id = pw.ForeignKeyField(User, backref="guilds")
+    user = pw.ForeignKeyField(User, backref="guilds")
 
     class Meta:
         database = db
+        table_name = "discobot_guild"
 
 class Channel(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
@@ -64,10 +67,11 @@ class Channel(pw.Model):
     notify = pw.BooleanField()
     test = pw.BooleanField()
 
-    guild_id = pw.ForeignKeyField(Guild, backref="channels")
+    guild = pw.ForeignKeyField(Guild, backref="channels")
 
     class Meta:
         database = db
+        table_name = "discobot_channel"
 
 
 # Data for insertion into SQL database
