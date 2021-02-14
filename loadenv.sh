@@ -1,5 +1,6 @@
 if [ -z "$1" ]; then
-    exit
+    echo "No file specified"
+    exit 1
 fi
 
 set -a
