@@ -13,5 +13,7 @@ FROM base AS runtime
 ENV PYTHONUNBUFFERED=1
 COPY --from=python-deps /.venv/ .venv/
 ENV PATH="/.venv/bin:$PATH"
-WORKDIR /code
-COPY . /code/
+WORKDIR /web
+COPY . /web/
+COPY ./wait-for /wait-for
+RUN apt-get update && apt-get install gcc libpq-dev netcat -y

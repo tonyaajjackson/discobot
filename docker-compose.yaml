@@ -52,19 +52,21 @@ services:
 
   # ==== BACKEND ====
   web:
-    build: ./backend
+    build: ./web
     command: python manage.py runserver 0.0.0.0:8000
+    # Debug: map volume over copied code
     volumes:
-      - ./backend:/code
+      - ./web:/web
     ports:
       - "8000:8000"
     depends_on:
-      - mongodb
+      - postgredb
     environment:
-      - MONGO_HOSTNAME=${MONGO_HOSTNAME}
-      - MONGO_PORT=${MONGO_PORT}
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - POSTGRES_HOSTNAME=${POSTGRES_HOSTNAME}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - discobot
 
