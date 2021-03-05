@@ -6,8 +6,7 @@ class Config(models.Model):
     testing_cron_expr = models.CharField(max_length=255)
 
 class User(models.Model):
-    id = models.AutoField(primary_key=True)
-    # id will need to become models.BigIntegerField(primary_key=True) when Discord user_id is implemented
+    id = models.BigIntegerField(primary_key=True)
     username = models.CharField(max_length=255)
     spotify_auth_token = models.BinaryField(null=True )
     encrypted_fernet_key = models.BinaryField(null=True)
