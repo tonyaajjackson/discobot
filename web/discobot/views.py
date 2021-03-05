@@ -47,13 +47,22 @@ def authorize_discord(request):
         discord_user = user_response.json()
         try:
             user = User.objects.get(id=discord_user['id'])
-            return redirect(reverse('home'))    
+            return redirect(reverse('add_bot'))    
         except User.DoesNotExist:
             user = User(id=int(discord_user['id']), username=discord_user['username'])
             user.save()
-        return redirect(reverse('home'))
+        return redirect(reverse('add_bot'))
     else:
         return redirect(reverse('login'))
 
-def home(request):
-    return HttpResponse("You're at the home page")
+# Add bot querystring will not change after launch
+add_bot_querystring = urlencode({
+    "client_id": DISCORD_CLIENT_ID,
+    "permissions": 10240, # Send Message, Manage Message
+    "redirect_uri": DISCORD_REDIRECT_URI,
+    "scope": "bot"
+})
+add_bot_url = discord_oauth_auth_url + add_bot_querystring
+
+def add_bot(request):
+    return render(request, "discobot/add_bot.html", { "add_bot_url": add_bot_url})
