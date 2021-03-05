@@ -12,14 +12,14 @@ discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
 DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
 DISCORD_CLIENT_SECRET = os.environ['DISCORD_CLIENT_SECRET']
 DISCORD_REDIRECT_URI = os.environ['DISCORD_REDIRECT_URI']
-scope = "identify"
 
 # auth_querystring will never change after first run
+auth_scope = "identify"
 auth_querystring = urlencode({
     "client_id": DISCORD_CLIENT_ID,
     "redirect_uri": DISCORD_REDIRECT_URI,
     "response_type": "code",
-    "scope": scope
+    "scope": auth_scope
 })
 auth_url = discord_oauth_auth_url + auth_querystring
 
@@ -34,7 +34,7 @@ def authorize_discord(request):
             "grant_type": "authorization_code",
             "code": request.GET['code'],
             "redirect_uri": DISCORD_REDIRECT_URI,
-            "scope": scope
+            "scope": auth_scope
         }
         token_response = requests.post("https://discord.com/api/oauth2/token", data=token_data)
         token = token_response.json()
