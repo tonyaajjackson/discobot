@@ -49,7 +49,7 @@ def authorize_discord(request):
             user = User.objects.get(id=discord_user['id'])
             return redirect(reverse('home'))    
         except User.DoesNotExist:
-            user = User(id=discord_user['id'], username=discord_user['username'])
+            user = User(id=int(discord_user['id']), username=discord_user['username'])
             user.save()
         return redirect(reverse('home'))
     else:

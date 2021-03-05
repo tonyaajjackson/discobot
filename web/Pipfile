@@ -9,6 +9,7 @@ verify_ssl = true
 psycopg2-binary = ">=2.8"
 Django = "<4.0,>=3.0"
 requests = "*"
+selenium = "*"
 
 [requires]
 python_version = "3.8"
