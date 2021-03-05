@@ -13,8 +13,7 @@ class Config(pw.Model):
         table_name = "discobot_config"
 
 class User(pw.Model):
-    id = pw.AutoField()
-    # id will need to become pw.BigIntegerField(primary_key=True) when Discord user_id is implemented
+    id = pw.BigIntegerField(primary_key=True)
     username = pw.CharField()
     spotify_auth_token = pw.BlobField(null=True )
     encrypted_fernet_key = pw.BlobField(null=True)
