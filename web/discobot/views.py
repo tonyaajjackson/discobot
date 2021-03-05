@@ -27,12 +27,12 @@ def login(request):
     return render(request, "discobot/login.html", {"auth_url": auth_url})
 
 def authorize_discord(request):
-    if code := request.GET['code']:
+    if 'code' in request.GET:
         token_data = {
             "client_id": DISCORD_CLIENT_ID,
             "client_secret": DISCORD_CLIENT_SECRET,
             "grant_type": "authorization_code",
-            "code": code,
+            "code": request.GET['code'],
             "redirect_uri": DISCORD_REDIRECT_URI,
             "scope": scope
         }
