@@ -72,9 +72,19 @@ class PostgreCacheHandler(CacheHandler):
             # No cached token
             return None
         
-        encrypted_token = self.user.spotify_auth_token.tobytes()
-                
-        encrypted_fernet_key = self.user.encrypted_fernet_key.tobytes()
+        # Handle psycopg2 returning bytes fields as type memoryview
+        # If data was not sent to postgres and returned, type still be bytes.
+        # Otherwise, psycopg2 will have changed type to memoryview and type
+        # will need to be converted back into bytes.
+        if type(self.user.spotify_auth_token) is bytes:
+            encrypted_token = self.user.spotify_auth_token
+        else:
+            encrypted_token = self.user.spotify_auth_token.tobytes()
+        
+        if type(self.user.spotify_auth_token) is bytes:
+            encrypted_fernet_key = self.user.encrypted_fernet_key
+        else:
+            encrypted_fernet_key = self.user.encrypted_fernet_key.tobytes()
 
         # Decrypt Fernet key using RSA private key
         fernet_key = self.private_key.decrypt(
