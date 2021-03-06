@@ -1,8 +1,11 @@
 import argparse
 import json
 import os
+import sys
 
 import peewee as pw
+
+from chatbot.models import Channel, Config, Guild, User, db
 
 
 # CLI Arg parsing
@@ -20,54 +23,13 @@ args = parser.parse_args()
 
 
 # Peewee PostgreSQL connection setup
-db = pw.PostgresqlDatabase(os.environ["POSTGRES_DB"],
+db.init(
+    database=os.environ["POSTGRES_DB"],
     user=os.environ["POSTGRES_USER"],
     password=os.environ["POSTGRES_PASSWORD"],
     host=os.environ["POSTGRES_HOSTNAME"],
     port=os.environ["POSTGRES_PORT"]
 )
-
-
-# Models
-class Config(pw.Model):
-    id = pw.AutoField()
-    playlist_update_cron_expr = pw.CharField()
-    testing_cron_expr = pw.CharField()
-
-    class Meta:
-        database = db
-
-class User(pw.Model):
-    id = pw.BigIntegerField(primary_key=True)
-    username = pw.CharField()
-    spotify_auth_token = pw.BlobField(null=True )
-    encrypted_fernet_key = pw.BlobField(null=True)
-    
-    class Meta:
-        database = db
-
-class Guild(pw.Model):
-    id = pw.BigIntegerField(primary_key=True)
-    all_time_playlist_uri = pw.CharField()
-    recent_playlist_uri = pw.CharField()
-    buffer_playlist_uri = pw.CharField()
-    
-    user = pw.ForeignKeyField(User, backref="guilds")
-
-    class Meta:
-        database = db
-
-class Channel(pw.Model):
-    id = pw.BigIntegerField(primary_key=True)
-    monitor = pw.BooleanField()
-    notify = pw.BooleanField()
-    test = pw.BooleanField()
-
-    guild = pw.ForeignKeyField(Guild, backref="channels")
-
-    class Meta:
-        database = db
-
 
 # Data for insertion into SQL database
 tables = [
@@ -87,13 +49,6 @@ for table in tables:
 # # Wipe old data
 db.connect()
 if db.get_tables():
-    response = input(
-        "Database at " + os.environ["POSTGRES_HOSTNAME"] +
-        " is not blank! Are you sure you want to wipe all data and load config files? [y/N]\n"
-    )
-    if response.lower() != 'y':
-        sys.exit()
-
     if "prod" in os.environ["POSTGRES_HOSTNAME"]:
         response = input(
             "You're attempting to overwrite the prod database!\n" +
