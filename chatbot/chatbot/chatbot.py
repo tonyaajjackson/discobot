@@ -68,7 +68,7 @@ spotipy_scope = (
 discord_client = discord.Client()
 spotify_link_regex = re.compile(r"https:\/\/open.spotify.com\/([^\n ]+)\/([A-Za-z0-9]{22})")
 
-# Discord functions
+# ====== Discord Events ======
 @discord_client.event
 async def on_ready():
     logging.info(f'{discord_client.user} is connected')
@@ -169,7 +169,30 @@ async def on_message(message):
                 sp.add_if_unique_tracks(guild.all_time_playlist_uri, top_song_ids)
                 sp.add_if_unique_tracks(guild.buffer_playlist_uri, top_song_ids)
 
+@discord_client.event
+async def on_guild_join(guild):
+    User.get_or_create(id=guild.owner_id)
 
+    logging.info("Adding new guild: " + str(guild.id))
+    new_guild = Guild(
+        id=guild.id,
+        user=guild.owner_id
+    )
+    new_guild.save()
+
+    
+    print("hello")
+
+@discord_client.event
+async def on_guild_remove(guild):
+    logging.info("Removed from guild: " + str(guild.id))
+    logging.info("Deleting channels for guild: " + str(guild.id))
+    Channel.delete().where(Channel.guild_id == guild.id).execute()
+    logging.info("Deleting guild: " + str(guild.id))
+    Guild.delete_by_id(guild.id)
+
+
+# ===== Scheduled =====
 @aiocron.crontab(Config.get().playlist_update_cron_expr)
 async def load_recent_playlist():
     for guild in Guild.select():

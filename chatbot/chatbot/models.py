@@ -24,9 +24,9 @@ class User(pw.Model):
 
 class Guild(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
-    all_time_playlist_uri = pw.CharField()
-    recent_playlist_uri = pw.CharField()
-    buffer_playlist_uri = pw.CharField()
+    all_time_playlist_uri = pw.CharField(null=True)
+    recent_playlist_uri = pw.CharField(null=True)
+    buffer_playlist_uri = pw.CharField(null=True)
     
     user = pw.ForeignKeyField(User, backref="guilds")
 
