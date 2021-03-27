@@ -13,48 +13,6 @@ DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
 DISCORD_CLIENT_SECRET = os.environ['DISCORD_CLIENT_SECRET']
 DISCORD_REDIRECT_URI = os.environ['DISCORD_REDIRECT_URI']
 
-# auth_querystring will never change after first run
-auth_scope = "identify"
-auth_querystring = urlencode({
-    "client_id": DISCORD_CLIENT_ID,
-    "redirect_uri": DISCORD_REDIRECT_URI,
-    "response_type": "code",
-    "scope": auth_scope
-})
-auth_url = discord_oauth_auth_url + auth_querystring
-
-def login(request):
-    return render(request, "discobot/login.html", {"auth_url": auth_url})
-
-def authorize_discord(request):
-    if 'code' in request.GET:
-        token_data = {
-            "client_id": DISCORD_CLIENT_ID,
-            "client_secret": DISCORD_CLIENT_SECRET,
-            "grant_type": "authorization_code",
-            "code": request.GET['code'],
-            "redirect_uri": DISCORD_REDIRECT_URI,
-            "scope": auth_scope
-        }
-        token_response = requests.post("https://discord.com/api/oauth2/token", data=token_data)
-        token = token_response.json()
-        user_response = requests.get(
-            "https://discord.com/api/users/@me?",
-            headers={
-                "Authorization": "Bearer " + token['access_token']
-            }
-        )
-        discord_user = user_response.json()
-        try:
-            user = User.objects.get(id=discord_user['id'])
-            return redirect(reverse('add_bot'))    
-        except User.DoesNotExist:
-            user = User(id=int(discord_user['id']), username=discord_user['username'])
-            user.save()
-        return redirect(reverse('add_bot'))
-    else:
-        return redirect(reverse('login'))
-
 # Add bot querystring will not change after launch
 add_bot_querystring = urlencode({
     "client_id": DISCORD_CLIENT_ID,
