@@ -171,17 +171,22 @@ async def on_message(message):
 
 @discord_client.event
 async def on_guild_join(guild):
-    User.get_or_create(id=guild.owner_id)
+    # Get user that added bot to guild
+    entries = await guild.audit_logs(limit=5, action=discord.AuditLogAction.bot_add).flatten()
+    bot_add_entry = [entry for entry in entries if entry.target == discord_client.user][0]
+    discord_user = bot_add_entry.user
 
-    logging.info("Adding new guild: " + str(guild.id))
+    User.get_or_create(id=discord_user.id)
+
+    logging.info("Adding new guild: " + str(guild.id) + " - " + str(guild.name))
     new_guild = Guild(
         id=guild.id,
         user=guild.owner_id
     )
-    new_guild.save()
+    new_guild.save(force_insert=True)
 
     
-    print("hello")
+    print("breakpoint")
 
 @discord_client.event
 async def on_guild_remove(guild):

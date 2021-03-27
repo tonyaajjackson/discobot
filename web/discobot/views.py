@@ -16,7 +16,7 @@ DISCORD_REDIRECT_URI = os.environ['DISCORD_REDIRECT_URI']
 # Add bot querystring will not change after launch
 add_bot_querystring = urlencode({
     "client_id": DISCORD_CLIENT_ID,
-    "permissions": 10240, # Send Message, Manage Message
+    "permissions": 10368, # View Audit Log, Send Message, Manage Message
     "redirect_uri": DISCORD_REDIRECT_URI,
     "scope": "bot"
 })
