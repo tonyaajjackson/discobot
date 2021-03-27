@@ -13,6 +13,5 @@ WORKDIR /chatbot
 COPY --from=python-deps /.venv/ .venv/
 ENV PATH="/chatbot/.venv/bin:$PATH"
 COPY ./chatbot ./chatbot
-COPY ./tests ./tests
 COPY ./wait-for /wait-for
 RUN apt-get update && apt-get install gcc libpq-dev netcat -y
