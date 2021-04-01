@@ -113,6 +113,10 @@ async def on_ready():
 
 @discord_client.event
 async def on_message(message):
+    if message.guild is None:
+        # DM
+        return
+
     try:
         guild = Guild.get(Guild.id == message.guild.id)
     except Guild.DoesNotExist:
@@ -184,6 +188,8 @@ async def on_guild_join(guild):
         user=guild.owner_id
     )
     new_guild.save(force_insert=True)
+
+    await discord_user.send("Thanks for adding Discobot to your server! Click here to configure your guild.")
 
     
     print("breakpoint")
