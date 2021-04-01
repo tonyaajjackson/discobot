@@ -1,11 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Config(models.Model):
     id = models.AutoField(primary_key=True)
     playlist_update_cron_expr = models.CharField(max_length=255)
     testing_cron_expr = models.CharField(max_length=255)
 
-class User(models.Model):
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     id = models.BigIntegerField(primary_key=True)
     username = models.CharField(max_length=255)
     spotify_auth_token = models.BinaryField(null=True )
