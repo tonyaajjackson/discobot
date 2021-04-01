@@ -23,7 +23,7 @@ from spotify_custom import PostgreCacheHandler, SpotifyCustom
 
 import psycopg2
 import peewee as pw
-from models import Channel, Config, Guild, User, db
+from models import Channel, Config, Guild, Profile, db
 
 # Environment Setup
 logging.basicConfig(
@@ -74,8 +74,8 @@ async def on_ready():
     logging.info(f'{discord_client.user} is connected')
 
     # Find the test user that owns a guild with a testing channel
-    test_user = (User
-        .select(User)
+    test_user = (Profile
+        .select(Profile)
         .join(Guild, pw.JOIN.LEFT_OUTER)
         .join(Channel, pw.JOIN.LEFT_OUTER)
         .where(Channel.test == True)
@@ -113,17 +113,18 @@ async def on_ready():
 
 @discord_client.event
 async def on_message(message):
-    if message.guild is None:
-        # DM
-        return
+    # DM
+    if message.guild is None: return
 
+    # Welcome message or discobot playlist update message
+    if message.author == discord_client.user and message.content[0:6] != "!debug": return
+    
     try:
         guild = Guild.get(Guild.id == message.guild.id)
     except Guild.DoesNotExist:
         logging.error("Received message from guild_id: " + str(message.guild.id) + " but no corresponding guild was found in guilds. Ignoring message.")
         return
 
-    if message.author == discord_client.user and message.content[0:6] != "!debug": return
     monitoring_channel_ids = [channel.id for channel in guild.channels.select(Channel.id).where(Channel.monitor == True)]
     if message.channel.id not in monitoring_channel_ids: return
 
@@ -180,14 +181,29 @@ async def on_guild_join(guild):
     bot_add_entry = [entry for entry in entries if entry.target == discord_client.user][0]
     discord_user = bot_add_entry.user
 
-    User.get_or_create(id=discord_user.id)
+    (profile, profile_created) = Profile.get_or_create(id=discord_user.id, username=discord_user.name)
 
-    logging.info("Adding new guild: " + str(guild.id) + " - " + str(guild.name))
+    if profile_created:
+        logging.info("Creating profile with id: " + str(profile.id))
+
+    logging.info("Adding new guild: " + str(guild.id) + " - " + str(guild.name) + " owned by profile: " + str(profile.id))
     new_guild = Guild(
         id=guild.id,
-        user=guild.owner_id
+        profile=guild.owner_id
     )
     new_guild.save(force_insert=True)
+
+    text_channels = [channel for channel in guild.channels if type(channel) is discord.channel.TextChannel]
+    for channel in text_channels:
+        logging.info("Adding channel id: " + str(channel.id) + " owned by guild: " + str(guild.id))
+        Channel(
+            id=channel.id,
+            monitor=False,
+            notify=False,
+            test=False,
+            guild=new_guild
+        ).save(force_insert=True)
+
 
     await discord_user.send("Thanks for adding Discobot to your server! Click here to configure your guild.")
 

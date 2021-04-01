@@ -145,7 +145,7 @@ cython_debug/
 config*.json
 channel*.json
 guild*.json
-user*.json
+profile*.json
 *.pem
 
 # Misc

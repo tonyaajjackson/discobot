@@ -13,14 +13,23 @@ class Config(pw.Model):
         table_name = "discobot_config"
 
 class User(pw.Model):
+    # Stand-in for the Django Users table so that the foreign key
+    # relationship works
+    class Meta:
+        database = db
+        table_name = "auth_user"
+
+class Profile(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
     username = pw.CharField()
     spotify_auth_token = pw.BlobField(null=True )
     encrypted_fernet_key = pw.BlobField(null=True)
+
+    user_id = pw.ForeignKeyField(User, backref="profile", null=True)
     
     class Meta:
         database = db
-        table_name = "discobot_user"
+        table_name = "discobot_profile"
 
 class Guild(pw.Model):
     id = pw.BigIntegerField(primary_key=True)
@@ -28,7 +37,7 @@ class Guild(pw.Model):
     recent_playlist_uri = pw.CharField(null=True)
     buffer_playlist_uri = pw.CharField(null=True)
     
-    user = pw.ForeignKeyField(User, backref="guilds")
+    profile = pw.ForeignKeyField(Profile, backref="guilds")
 
     class Meta:
         database = db
