@@ -3,10 +3,12 @@ import os
 from urllib.parse import urlencode
 import requests
 
+from django.contrib.auth import login
 from django.shortcuts import get_object_or_404, render, redirect, reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 
 from .models import User, Profile
+from django.contrib.auth.forms import UserCreationForm
 
 discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
 DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
@@ -32,12 +34,38 @@ def profile_redirect(request):
         return redirect("add_bot")
     
     if profile.user_id is None:
-        return redirect("create_user")
+        return redirect(reverse("create_user") + "?profile_id=" + profile_id)
     else:
         return redirect("manage_user", user_id=profile.user_id)
 
 def create_user(request):
-    return HttpResponse("Create your account!")
+    if profile_id := request.GET.get('profile_id', None):
+        profile = get_object_or_404(Profile, id=profile_id)
+
+        if profile.user_id is not None:
+            return redirect("manage_user", user_id=profile.user_id)
+    else:
+        return redirect("add_bot")
+
+    if request.method == "GET":
+        return render(
+            request, "discobot/create_user.html",
+            {"form": UserCreationForm}
+        )
+
+    elif request.method == "POST":        
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            
+            profile = Profile.objects.get(id=request.GET.get('profile_id'))
+            profile.user_id = user
+            profile.save()
+
+            return redirect("manage_user", user.id)
 
 def manage_user(request, user_id):
-    return HttpResponse("Manage user account: " + str(user_id))
+    profile = Profile.objects.get(user_id=user_id)
+
+    return HttpResponse("Manage user account: " + str(user_id) + " which is Profile: " + str(profile.id))
