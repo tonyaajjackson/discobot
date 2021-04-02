@@ -7,6 +7,7 @@ services:
       context: ./chatbot/
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DJANGO_URL=${DJANGO_URL}
       - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
       - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
       - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI}
