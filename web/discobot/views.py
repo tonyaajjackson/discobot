@@ -49,7 +49,7 @@ def create_user(request):
 
     if request.method == "GET":
         return render(
-            request, "discobot/create_user.html",
+            request, "registration/create_user.html",
             {"form": UserCreationForm}
         )
 
