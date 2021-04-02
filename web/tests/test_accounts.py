@@ -107,3 +107,75 @@ class AccountsTestCase(TestCase):
         )
 
         self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))
+
+    def test_getting_manage_profile_page(self):
+        credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='test',
+            user=existing_user
+            )
+        profile.save()
+        
+        client = Client()
+        response = client.get(
+            reverse("manage_user", kwargs={"user_id": existing_user.id})
+        )
+
+        self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))
+
+        client.login(**credentials)
+
+        response = client.get(
+            reverse("manage_user", kwargs={"user_id": existing_user.id})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], reverse("manage_user", kwargs={"user_id":existing_user.id}))
+
+    def test_getting_manage_profile_page_as_different_user(self):
+        existing_user_credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**existing_user_credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='existing_user',
+            user=existing_user
+            )
+        profile.save()
+
+        new_user_credentials = {
+            "username":"new_user",
+            "password":"asdfasdfasdf"
+        }
+        new_user = User.objects.create_user(**new_user_credentials)
+        new_user.save()
+
+        profile_id = 2
+        profile = Profile(
+            id=profile_id,
+            username='new_user',
+            user=new_user
+            )
+        profile.save()
+
+        client = Client()
+        client.login(**new_user_credentials)
+
+        response = client.get(
+            reverse("manage_user", kwargs={"user_id": existing_user.id})
+        )
+
+        self.assertRedirects(response, reverse("manage_user", kwargs={"user_id":new_user.id}))
