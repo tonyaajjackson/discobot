@@ -78,7 +78,7 @@ class AccountsTestCase(TestCase):
             follow=True
         )
 
-        self.assertRedirects(response, reverse('manage_user', kwargs={"user_id":existing_user.id}))
+        self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))
 
     def test_posting_to_create_user_when_profile_already_bound_to_user(self):
         existing_user = User.objects.create_user(
@@ -106,4 +106,4 @@ class AccountsTestCase(TestCase):
             follow=True
         )
 
-        self.assertRedirects(response, reverse('manage_user', kwargs={"user_id":existing_user.id}))
+        self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))

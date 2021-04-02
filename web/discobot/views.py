@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 import requests
 
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect, reverse
 from django.http import HttpResponse, HttpResponseForbidden
 
@@ -65,7 +66,11 @@ def create_user(request):
 
             return redirect("manage_user", user.id)
 
+@login_required
 def manage_user(request, user_id):
+    if user_id != request.user.id:
+        return redirect("manage_user", user_id=request.user.id)
+    
     profile = Profile.objects.get(user_id=user_id)
 
     return HttpResponse("Manage user account: " + str(user_id) + " which is Profile: " + str(profile.id))
