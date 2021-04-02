@@ -73,4 +73,4 @@ def manage_user(request, user_id):
     
     profile = Profile.objects.get(user_id=user_id)
 
-    return HttpResponse("Manage user account: " + str(user_id) + " which is Profile: " + str(profile.id))
+    return render(request, "discobot/manage_profile.html", context={"user_id": user_id, "profile_id": profile.id})
