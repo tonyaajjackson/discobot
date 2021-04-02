@@ -13,6 +13,7 @@ def validate_secrets():
     try:
         environment_variables = [
             "DISCORD_TOKEN",
+            "DJANGO_URL",
             "SPOTIFY_CLIENT_ID",
             "SPOTIFY_CLIENT_SECRET",
             "SPOTIFY_REDIRECT_URI",
@@ -40,18 +41,6 @@ def validate_secrets():
         os.environ["POSTGRES_PORT"] + \
         "/" + \
         os.environ["POSTGRES_DB"]
-
-    assert type(secrets['DISCORD_TOKEN']) == str, \
-        "DISCORD_TOKEN is not a string"
-    
-    assert type(secrets['SPOTIFY_CLIENT_ID']) == str, \
-        "SPOTIFY_CLIENT_ID is not a string"
-    
-    assert type(secrets['SPOTIFY_CLIENT_SECRET']) == str, \
-        "SPOTIFY_CLIENT_SECRET is not a string"
-    
-    assert type(secrets['SPOTIFY_REDIRECT_URI']) == str, \
-        "SPOTIFY_REDIRECT_URI is not a string"
 
     assert validators.url(secrets['SPOTIFY_REDIRECT_URI']), \
         "SPOTIFY_REDIRECT_URI is not a valid URL"

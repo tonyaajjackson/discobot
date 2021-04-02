@@ -205,7 +205,10 @@ async def on_guild_join(guild):
         ).save(force_insert=True)
 
 
-    await discord_user.send("Thanks for adding Discobot to your server! Click here to configure your guild.")
+    await discord_user.send(
+        "Thanks for adding Discobot to your server! Click here to configure your guild:\n" + 
+        secrets["DJANGO_URL"] + "/?profile_id=" + str(profile.id)
+    )
 
     
     print("breakpoint")
