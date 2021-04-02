@@ -7,7 +7,7 @@ class Config(models.Model):
     testing_cron_expr = models.CharField(max_length=255)
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     id = models.BigIntegerField(primary_key=True)
     username = models.CharField(max_length=255)
     spotify_auth_token = models.BinaryField(null=True )
