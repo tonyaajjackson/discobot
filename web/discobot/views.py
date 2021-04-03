@@ -1,5 +1,8 @@
 import os
 
+import string
+import secrets
+
 from urllib.parse import urlencode
 import requests
 
@@ -24,6 +27,10 @@ add_bot_querystring = urlencode({
     "scope": "bot"
 })
 add_bot_url = discord_oauth_auth_url + add_bot_querystring
+
+SPOTIFY_CLIENT_ID = os.environ['SPOTIFY_CLIENT_ID']
+SPOTIFY_CLIENT_SECRET = os.environ['SPOTIFY_CLIENT_SECRET']
+SPOTIFY_REDIRECT_URI = os.environ['SPOTIFY_REDIRECT_URI']
 
 def add_bot(request):
     return render(request, "discobot/add_bot.html", { "add_bot_url": add_bot_url})
@@ -71,6 +78,31 @@ def manage_user(request, user_id):
     if user_id != request.user.id:
         return redirect("manage_user", user_id=request.user.id)
     
-    profile = Profile.objects.get(user_id=user_id)
+    profile = get_object_or_404(Profile, user_id=user_id)
+
+    if profile.spotify_auth_token is None:
+        return redirect("spotify_auth", user_id=user_id)
 
     return render(request, "discobot/manage_profile.html", context={"user_id": user_id, "profile_id": profile.id})
+
+@login_required
+def spotify_auth(request, user_id):
+    profile = get_object_or_404(Profile, user_id=user_id)
+
+    profile.spotify_state = secrets.token_urlsafe()
+    profile.save()
+
+    spotify_auth_queries = {
+        'client_id': SPOTIFY_CLIENT_ID,
+        'response_type': 'code',
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'state': profile.spotify_state,
+        'scope': 'playlist-modify-public' + ' ' + 'playlist-modify-private',
+    }
+
+    spotify_auth_url = 'https://accounts.spotify.com/authorize?' + urlencode(spotify_auth_queries)
+
+    return render(request, "discobot/spotify_auth.html", context={"spotify_auth_url": spotify_auth_url})
+
+def spotify_redirect(request):
+    return HttpResponse("Got a spotify redirect")
