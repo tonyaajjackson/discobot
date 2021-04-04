@@ -315,6 +315,87 @@ class SpotifyAuthTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_get_spotify_redirect_directly(self):
+        # Setup
+        credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='test',
+            user=existing_user
+            )
+        profile.save()
+        
+        client = Client()
+        client.login(**credentials)
+
+        response = client.get(reverse('spotify_redirect'))
+
+        self.assertEqual(response.status_code, 403) # Forbidden
+
+    def test_get_spotify_with_error_code(self):
+        # Setup
+        credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='test',
+            user=existing_user
+            )
+        profile.save()
+        
+        client = Client()
+        client.login(**credentials)
+
+        error_reason = 'fake-error-reason'
+        response = client.get(
+            reverse('spotify_redirect'),
+            {'error': error_reason})
+
+        assert error_reason in response.content.decode()
+
+    def test_get_spotify_with_invalid_state(self):
+        # Setup
+        credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='test',
+            user=existing_user
+            )
+        profile.save()
+        
+        client = Client()
+        client.login(**credentials)
+
+        invalid_state = 'invalid-state'
+        response = client.get(
+            reverse('spotify_redirect'),
+            {
+                'state': invalid_state,
+                'code': 'fake-spotify-code'
+            }
+        )
+
+        assert 'This Spotify authorization link has already been used.' in response.content.decode()
 
 class SeleniumSpotifyOauthTestCase(StaticLiveServerTestCase):
     def setUp(self):
@@ -384,6 +465,7 @@ class SeleniumSpotifyOauthTestCase(StaticLiveServerTestCase):
         wait.until(lambda driver: spotify_redirect_page.url in driver.current_url)
 
         assert 'Got a spotify redirect' in self.driver.page_source
+        assert 'access_token' in self.driver.page_source
 
     def test_denying_spotify_auth(self):
         # Setup

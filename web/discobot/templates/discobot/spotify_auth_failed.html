@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>Error: {{ message }}</p>
+<a href="{% url 'spotify_auth' user_id %}">Retry Spotify Authorization</a>
+{% endblock %}

@@ -5,6 +5,7 @@ import secrets
 
 from urllib.parse import urlencode
 import requests
+import json
 
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -105,10 +106,57 @@ def spotify_auth(request, user_id):
 
     return render(request, "discobot/spotify_auth.html", context={"spotify_auth_url": spotify_auth_url})
 
+@login_required
 def spotify_redirect(request):
     if error:= request.GET.get('error'):
-        return HttpResponse('Error:' + error)
-    elif code:= request.GET.get('code'):
-        return HttpResponse('Got a spotify redirect' + code)
+        return render(request,
+            'discobot/spotify_auth_failed.html',
+            {
+                'message': error,
+                'user_id': request.user.id
+            }
+        )
+    elif spotify_auth_code:= request.GET.get('code'):
+        state = request.GET.get('state')
+
+        try:
+            profile = Profile.objects.get(spotify_state=state)
+        except Profile.DoesNotExist:
+            return render(
+                request,
+                'discobot/spotify_auth_failed.html',
+                {
+                    'message': 'This Spotify authorization link has already been used.',
+                    'user_id': request.user.id
+                }
+            )
+
+        spotify_token_queries = {
+            'grant_type': 'authorization_code',
+            'code': spotify_auth_code,
+            'redirect_uri': SPOTIFY_REDIRECT_URI,
+            'client_id': SPOTIFY_CLIENT_ID,
+            'client_secret': SPOTIFY_CLIENT_SECRET
+        }
+
+        token_response = requests.post(
+            'https://accounts.spotify.com/api/token',
+            spotify_token_queries
+        )
+
+        if token_response.status_code != 200:
+            return render(
+                request,
+                'discobot/spotify_auth_failed.html',
+                {
+                    'message': 'Failed to get token using authorization code',
+                    'user_id': request.user.id
+                }
+            )
+        
+        auth_token = json.loads(token_response.content.decode())
+
+        return HttpResponse("Got a spotify redirect!<br>" + str(auth_token))
+
     else:
-        return HttpResponseForbidden
+        return HttpResponseForbidden()
