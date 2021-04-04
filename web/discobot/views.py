@@ -51,6 +51,8 @@ def create_user(request):
 
         if profile.user_id is not None:
             return redirect("manage_user", user_id=profile.user_id)
+    elif request.user.id:
+        return redirect('manage_user', user_id=request.user.id)
     else:
         return redirect("add_bot")
 

@@ -14,7 +14,7 @@ from .page_objects import LoginPage, SpotifyAuthPage, SpotifyLoginPage, SpotifyO
 
 DJANGO_URL = os.environ['DJANGO_URL']
 
-class AccountsTestCase(TestCase):
+class ProfileTestCase(TestCase):
     def test_profile_with_no_query_string_id(self):
         client = Client()
         response = client.get(reverse('profile_redirect'))
@@ -29,6 +29,62 @@ class AccountsTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_valid_profile(self):
+        profile_id = 1
+        profile = Profile(id=profile_id, username='test')
+        profile.save()
+
+        client = Client()
+        create_user_page = client.get(
+            reverse('profile_redirect'),
+            {'profile_id': profile_id},
+            follow=True
+        )
+
+        self.assertEqual(create_user_page.status_code, 200)
+
+
+class UserTestCase(TestCase):
+    def test_getting_create_user_with_no_profile(self):
+        client = Client()
+        response = client.get(
+            reverse('create_user'),
+        )
+
+        self.assertRedirects(response, reverse('add_bot'))
+
+    def test_getting_create_user_when_logged_in(self):
+        credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        existing_user = User.objects.create_user(**credentials)
+        existing_user.save()
+
+        profile_id = 1
+        profile = Profile(
+            id=profile_id,
+            username='test',
+            user=existing_user
+            )
+        profile.save()
+        
+        client = Client()
+        client.login(**credentials)
+
+        response = client.get(
+            reverse('create_user'),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('manage_user', kwargs={'user_id': existing_user.id}),
+            target_status_code=302
+        )
+        ## Expect manage_user page to subsequently redirect to spotify_auth 
+        ## page as no spotify auth token has been set
+
 
     def test_creating_user_account(self):
         profile_id = 1
@@ -219,6 +275,8 @@ class AccountsTestCase(TestCase):
         )
         self.assertRedirects(response, reverse('manage_user', kwargs={"user_id":new_user.id}))
 
+
+class SpotifyAuthTestCase(TestCase):
     def test_spotify_auth_with_invalid_user_id(self):
         # Setup
         credentials = {
