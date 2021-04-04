@@ -106,4 +106,9 @@ def spotify_auth(request, user_id):
     return render(request, "discobot/spotify_auth.html", context={"spotify_auth_url": spotify_auth_url})
 
 def spotify_redirect(request):
-    return HttpResponse("Got a spotify redirect")
+    if error:= request.GET.get('error'):
+        return HttpResponse('Error:' + error)
+    elif code:= request.GET.get('code'):
+        return HttpResponse('Got a spotify redirect' + code)
+    else:
+        return HttpResponseForbidden
