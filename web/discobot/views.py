@@ -16,7 +16,6 @@ from django.contrib.auth.forms import UserCreationForm
 
 discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
 DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
-DISCORD_CLIENT_SECRET = os.environ['DISCORD_CLIENT_SECRET']
 DISCORD_REDIRECT_URI = os.environ['DISCORD_REDIRECT_URI']
 
 # Add bot querystring will not change after launch
