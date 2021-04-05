@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>Manage guild: {{ guild_id }}</p><br>
+<form action="{% url 'update_guild' guild_id %}" method="post">
+    {% csrf_token %}
+    {{ guild_form.as_p }}
+    <input type="submit" value="Submit">
+</form>
+{% endblock %}

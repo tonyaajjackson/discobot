@@ -15,6 +15,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 
 from .models import User, Profile, Guild
 from .cache_token import save_token_to_cache
+from .forms import GuildForm
 
 discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
 DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
@@ -166,7 +167,35 @@ def spotify_redirect(request):
     else:
         return HttpResponseForbidden()
 
+@login_required
 def manage_guild(response, guild_id):
     guild = get_object_or_404(Guild, id=guild_id)
+
+    guild_form = GuildForm(
+        instance=guild,
+        initial={field:getattr(guild, field) for field in GuildForm.Meta.fields}
+    )
     
-    return HttpResponse('Manage guild #' + str(guild_id))
+    return render(
+        response,
+        'discobot/manage_guild.html',
+        {
+            'guild_id': guild_id,
+            'guild_form': guild_form
+        }
+    )
+
+@login_required
+def update_guild(request, guild_id):
+    if request.method == 'POST':
+        guild = get_object_or_404(Guild, id=guild_id)
+        guild_form = GuildForm(request.POST, instance=guild)
+        
+        if guild_form.is_valid():
+            guild_form.save()
+            return redirect('manage_guild', guild_id=guild_id)
+        else:
+            return HttpResponse('Invalid form values')
+        
+    else:
+        return HttpResponseForbidden()

@@ -11,5 +11,6 @@ urlpatterns = [
     path('user/<int:user_id>', views.manage_user, name="manage_user"),
     path('spotify_auth/<int:user_id>', views.spotify_auth, name='spotify_auth'),
     path('spotify_redirect', views.spotify_redirect, name='spotify_redirect'),
-    path('guild/<int:guild_id>', views.manage_guild, name='manage_guild')
+    path('guild/<int:guild_id>', views.manage_guild, name='manage_guild'),
+    path('guild/<int:guild_id>/update', views.update_guild, name='update_guild')
 ]

@@ -1,5 +1,8 @@
 import os
 
+from lxml import etree
+from io import BytesIO
+
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import Client, TestCase
 from django.shortcuts import reverse
@@ -569,3 +572,118 @@ class SeleniumSpotifyOauthTestCase(StaticLiveServerTestCase):
         wait.until(lambda driver: spotify_redirect_page.url in driver.current_url)
 
         assert 'Error' in self.driver.page_source
+
+
+class ManageGuildTestCase(TestCase):
+    def test_get_invalid_guild(self):
+        # Setup
+        user_credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        user = User.objects.create_user(**user_credentials)
+        user.save()
+
+        profile = Profile(
+            id=1,
+            username='test',
+            user=user
+            )
+        profile.save()
+
+        client = Client()
+        client.login(**user_credentials)
+
+        response = client.get(reverse('manage_guild', kwargs={'guild_id': 9999}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_manage_guild(self):
+        # Setup
+        user_credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        user = User.objects.create_user(**user_credentials)
+        user.save()
+
+        profile = Profile(
+            id=1,
+            username='test',
+            user=user
+            )
+        profile.save()
+
+        old_uris = {
+            'all_time_playlist_uri': 'old_all_time_playlist_uri',
+            'recent_playlist_uri':'old_recent_playlist_uri',
+            'buffer_playlist_uri':'old_buffer_playlist_uri',
+        }
+
+        guild = Guild(
+            id=1, 
+            profile=profile,
+            **old_uris
+        )
+        guild.save()
+
+        client = Client()
+        client.login(**user_credentials)
+
+        old_response = client.get(reverse('manage_guild', kwargs={'guild_id': guild.id}))
+
+        assert str(guild.id) in old_response.content.decode()
+        
+        old_tree = etree.parse(BytesIO(old_response.content), etree.HTMLParser())
+
+        for (key, val) in old_uris.items():
+            assert old_tree.xpath(
+                "//input[@id='id_" + key + "' and @value='" + val + "']"
+            ) != []
+
+        new_uris = {
+            'all_time_playlist_uri': 'new_all_time_playlist_uri',
+            'recent_playlist_uri':'new_recent_playlist_uri',
+            'buffer_playlist_uri':'new_buffer_playlist_uri',
+        }
+
+        redirect = client.post(
+            reverse('update_guild', kwargs={'guild_id': guild.id}),
+            data=new_uris
+        )
+
+        self.assertRedirects(
+            redirect,
+            reverse('manage_guild', kwargs={'guild_id': guild.id})
+        )
+        
+        new_response = client.get(reverse('manage_guild', kwargs={'guild_id': guild.id}))
+        
+        new_tree = etree.parse(BytesIO(new_response.content), etree.HTMLParser())
+
+        for (key, val) in new_uris.items():
+            assert new_tree.xpath(
+                "//input[@id='id_" + key + "' and @value='" + val + "']"
+            ) != []
+
+    def test_get_update_guild(self):
+        # Setup
+        user_credentials = {
+            "username":"existing_user",
+            "password":"asdfasdfasdf"
+        }
+        user = User.objects.create_user(**user_credentials)
+        user.save()
+
+        profile = Profile(
+            id=1,
+            username='test',
+            user=user
+            )
+        profile.save()
+
+        client = Client()
+        client.login(**user_credentials)
+
+        response = client.get(reverse('update_guild', kwargs={'guild_id': 1}))
+
+        self.assertEqual(response.status_code, 403) # Forbidden
