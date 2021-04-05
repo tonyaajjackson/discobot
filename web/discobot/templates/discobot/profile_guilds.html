@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>Select a guild to configure:</p>
+{% for guild_id in guild_ids %}
+    <a href="{% url 'manage_guild' guild_id %}">{{ guild_id }}</p>
+{% endfor %}
+{% endblock %}

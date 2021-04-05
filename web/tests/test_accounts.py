@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.support.ui import WebDriverWait
 
-from discobot.models import Profile, User
+from discobot.models import Guild, Profile, User
 
 from .page_objects import \
     AddBotPage, LoginPage, ManageUserPage, SpotifyAuthPage, \
@@ -16,7 +16,7 @@ from .page_objects import \
 
 DJANGO_URL = os.environ['DJANGO_URL']
 
-class ProfileTestCase(TestCase):
+class CreateUserTestCase(TestCase):
     def test_profile_with_no_query_string_id(self):
         client = Client()
         response = client.get(reverse('profile_redirect'))
@@ -46,8 +46,6 @@ class ProfileTestCase(TestCase):
 
         self.assertEqual(create_user_page.status_code, 200)
 
-
-class UserTestCase(TestCase):
     def test_getting_create_user_with_no_profile(self):
         client = Client()
         response = client.get(
@@ -86,7 +84,6 @@ class UserTestCase(TestCase):
         )
         ## Expect manage_user page to subsequently redirect to spotify_auth 
         ## page as no spotify auth token has been set
-
 
     def test_creating_user_account(self):
         profile_id = 1
@@ -177,48 +174,84 @@ class UserTestCase(TestCase):
 
         self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))
 
+
+class ManageProfileTestCase(TestCase):
     def test_getting_manage_profile_page(self):
         # Setup
-        credentials = {
+        user_credentials = {
             "username":"existing_user",
             "password":"asdfasdfasdf"
         }
-        existing_user = User.objects.create_user(**credentials)
-        existing_user.save()
+        user = User.objects.create_user(**user_credentials)
+        user.save()
 
-        profile_id = 1
         profile = Profile(
-            id=profile_id,
+            id=1,
             username='test',
-            user=existing_user
+            user=user
             )
         profile.save()
+
+        guild_1 = Guild(id=1, profile=profile)
+        guild_2 = Guild(id=2, profile=profile)
+        guild_1.save()
+        guild_2.save()
+
+        other_user_credentials = {
+            "username":"other_user",
+            "password":"asdfasdfasdf"
+        }
+        other_user = User.objects.create_user(**other_user_credentials)
+        other_user.save()
+
+        other_profile = Profile(
+            id=2,
+            username='test',
+            user=other_user
+            )
+        other_profile.save()
+
+        other_user_guild = Guild(id=3, profile=other_profile)
+        other_user_guild.save()
         
+        # Test
         client = Client()
 
         # Not logged in
         response = client.get(
-            reverse("manage_user", kwargs={"user_id": existing_user.id})
+            reverse("manage_user", kwargs={"user_id": user.id})
         )
 
-        self.assertRedirects(response, reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":existing_user.id}))
+        self.assertRedirects(
+            response,
+            reverse('login') + "?next=" + reverse("manage_user", kwargs={"user_id":user.id})
+        )
 
         # Logged in but no spotify token
-        client.login(**credentials)
+        client.login(**user_credentials)
         response = client.get(
-            reverse("manage_user", kwargs={"user_id": existing_user.id})
+            reverse("manage_user", kwargs={"user_id": user.id})
         )
-        self.assertRedirects(response, reverse('spotify_auth', kwargs={'user_id': existing_user.id}))
+        self.assertRedirects(
+            response,
+            reverse('spotify_auth', kwargs={'user_id': user.id})
+        )
 
         # Logged in and with token
         profile.spotify_auth_token=b"fakespotifytoken"
         profile.save()
         response = client.get(
-            reverse("manage_user", kwargs={"user_id": existing_user.id})
+            reverse("manage_user", kwargs={"user_id": user.id})
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request['PATH_INFO'], reverse("manage_user", kwargs={"user_id":existing_user.id}))
+        self.assertEqual(
+            response.request['PATH_INFO'],
+            reverse("manage_user", kwargs={"user_id":user.id})
+        )
+        assert str(guild_1.id) in response.content.decode()
+        assert str(guild_2.id) in response.content.decode()
+        assert str(other_user_guild.id) not in response.content.decode()
 
     def test_getting_manage_profile_page_as_different_user(self):
         # Setup
@@ -398,6 +431,7 @@ class SpotifyAuthTestCase(TestCase):
         )
 
         assert 'This Spotify authorization link has already been used.' in response.content.decode()
+
 
 class SeleniumSpotifyOauthTestCase(StaticLiveServerTestCase):
     def setUp(self):

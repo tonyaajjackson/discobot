@@ -13,7 +13,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, render, redirect, reverse
 from django.http import HttpResponse, HttpResponseForbidden
 
-from .models import User, Profile
+from .models import User, Profile, Guild
 from .cache_token import save_token_to_cache
 
 discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
@@ -86,7 +86,9 @@ def manage_user(request, user_id):
     if profile.spotify_auth_token is None:
         return redirect("spotify_auth", user_id=user_id)
 
-    return render(request, "discobot/manage_profile.html", context={"user_id": user_id, "profile_id": profile.id})
+    guild_ids = [guild.id for guild in Guild.objects.filter(profile=profile)]
+
+    return render(request, "discobot/profile_guilds.html", context={"guild_ids": guild_ids})
 
 @login_required
 def spotify_auth(request, user_id):
@@ -163,3 +165,8 @@ def spotify_redirect(request):
 
     else:
         return HttpResponseForbidden()
+
+def manage_guild(response, guild_id):
+    guild = get_object_or_404(Guild, id=guild_id)
+    
+    return HttpResponse('Manage guild #' + str(guild_id))
