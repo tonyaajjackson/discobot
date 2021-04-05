@@ -9,11 +9,12 @@ import json
 
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, render, redirect, reverse
 from django.http import HttpResponse, HttpResponseForbidden
 
 from .models import User, Profile
-from django.contrib.auth.forms import UserCreationForm
+from .cache_token import save_token_to_cache
 
 discord_oauth_auth_url = "https://discord.com/api/oauth2/authorize?"
 DISCORD_CLIENT_ID = os.environ['DISCORD_CLIENT_ID']
@@ -156,7 +157,9 @@ def spotify_redirect(request):
         
         auth_token = json.loads(token_response.content.decode())
 
-        return HttpResponse("Got a spotify redirect!<br>" + str(auth_token))
+        save_token_to_cache(auth_token, profile)
+
+        return redirect('manage_user', request.user.id)
 
     else:
         return HttpResponseForbidden()

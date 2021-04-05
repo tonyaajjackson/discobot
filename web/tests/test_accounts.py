@@ -10,7 +10,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from discobot.models import Profile, User
 
-from .page_objects import AddBotPage, LoginPage, SpotifyAuthPage, SpotifyLoginPage, SpotifyOauthPage, SpotifyRedirectPage
+from .page_objects import \
+    AddBotPage, LoginPage, ManageUserPage, SpotifyAuthPage, \
+    SpotifyLoginPage, SpotifyOauthPage, SpotifyRedirectPage
 
 DJANGO_URL = os.environ['DJANGO_URL']
 
@@ -461,11 +463,13 @@ class SeleniumSpotifyOauthTestCase(StaticLiveServerTestCase):
         test_url = self.driver.current_url.replace(DJANGO_URL, self.live_server_url)
         self.driver.get(test_url)
 
-        spotify_redirect_page = SpotifyRedirectPage()
-        wait.until(lambda driver: spotify_redirect_page.url in driver.current_url)
+        manage_user_page = ManageUserPage()
+        wait.until(lambda driver: manage_user_page.url_regex.match(driver.current_url))
 
-        assert 'Got a spotify redirect' in self.driver.page_source
-        assert 'access_token' in self.driver.page_source
+        profile.refresh_from_db()
+        assert profile.spotify_auth_token is not None
+        assert profile.encrypted_fernet_key is not None
+        assert profile.spotify_state is None
 
     def test_denying_spotify_auth(self):
         # Setup

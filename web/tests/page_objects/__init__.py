@@ -1,5 +1,6 @@
 from .add_bot import AddBotPage
 from .login_page import LoginPage
+from .manage_user import ManageUserPage
 from .spotify_auth import SpotifyAuthPage
 from .spotify_login import SpotifyLoginPage
 from .spotify_oauth import SpotifyOauthPage
