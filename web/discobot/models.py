@@ -21,7 +21,7 @@ class Guild(models.Model):
     recent_playlist_uri = models.CharField(max_length=255)
     buffer_playlist_uri = models.CharField(max_length=255)
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
 
 class Channel(models.Model):
     id = models.BigIntegerField(primary_key=True)
